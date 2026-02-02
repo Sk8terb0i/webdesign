@@ -2,7 +2,7 @@ name: Deploy static content to Pages
 
 on:
   push:
-    branches: ["master"] # "main" Or "master" depending on your Fork default
+    branches: ["master"] # "main" or "master" depending on your Fork default
 
 permissions:
   contents: read
