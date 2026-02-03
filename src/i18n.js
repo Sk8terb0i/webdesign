@@ -12,6 +12,7 @@ i18n
           brand: "arnold web & streaming",
           tagline: "a simple, good looking solution without any monthly costs",
           verticalText: "modern. simple. yours.",
+          drag_explore: "drag to explore",
           web_technical: "technical",
           stream_technical: "technical",
           about_me: "about me",
@@ -47,6 +48,7 @@ i18n
           tagline:
             "eine einfache, gut aussehende Lösung ohne monatliche Kosten",
           verticalText: "modern. einfach. deins.",
+          drag_explore: "maus gedrückt halten und erkunden",
           web_technical: "technisches",
           stream_technical: "technisches",
           about_me: "über mich",

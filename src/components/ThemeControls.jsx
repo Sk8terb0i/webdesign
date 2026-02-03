@@ -6,11 +6,11 @@ const ThemeControls = ({
   themeIndex,
   hoveredTheme,
   isExpanding,
-  onThemeClick,
+  onThemeMouseDown, // Changed prop name
   onHover,
   textColor,
   currentThemeName,
-  tagline, // Added prop
+  tagline,
 }) => (
   <footer className="flex justify-between items-end w-full mt-8 relative md:translate-y-4 z-20">
     <div
@@ -40,7 +40,8 @@ const ThemeControls = ({
           return (
             <button
               key={tItem.name}
-              onClick={() => onThemeClick(idx)}
+              // Switch to onMouseDown to enable dragging
+              onMouseDown={(e) => onThemeMouseDown(idx, e)}
               onMouseEnter={() => onHover(idx)}
               onMouseLeave={() => onHover(null)}
               className="relative w-6 h-6 flex items-center justify-center cursor-pointer outline-none"
