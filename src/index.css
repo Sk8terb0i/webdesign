@@ -29,20 +29,6 @@
   font-style: normal;
 }
 
-@theme {
-  --font-sans: 'PPMori', sans-serif;
-  
-  /* UPDATED TO SWISS PINK PALETTE */
-  --color-background: #fce0e8;   /* Light Pink */
-  --color-text: #c61e3d;         /* Cherry Red */
-  --color-primary: #ecd0da;      /* Muted Pink for the right panel */
-  
-  /* We can keep these variables if you want to use them for accents, 
-     but the primary design now uses the colors above */
-  --color-accent: #c61e3d; 
-  --color-secondary: #ff7051; 
-}
-
 @layer base {
   body {
     font-family: var(--font-sans);
