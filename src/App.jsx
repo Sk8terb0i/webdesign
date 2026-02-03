@@ -2,14 +2,10 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Import your new components
 import Header from "./components/Header";
 import NavSection from "./components/NavSection";
 import ThemeControls from "./components/ThemeControls";
 
-/**
- * THEME CONFIGURATION
- */
 const themes = [
   { name: "pink", bg: "#fce0e8", text: "#c61e3d", level3: "#232c2d" },
   { name: "industrial", bg: "#f4f4f4", text: "#232c2d", level3: "#232c2d" },
@@ -25,18 +21,13 @@ const CIRCLE_SETTINGS = {
 
 function App() {
   const { t, i18n } = useTranslation();
-
   const [openSections, setOpenSections] = useState([]);
   const [themeIndex, setThemeIndex] = useState(0);
   const [hoveredTheme, setHoveredTheme] = useState(null);
   const [isExpanding, setIsExpanding] = useState(false);
 
   const currentTheme = themes[themeIndex];
-  const activeColor = isExpanding
-    ? themes[hoveredTheme].text
-    : currentTheme.text;
   const isEn = i18n.language?.startsWith("en");
-
   const toggleLang = () => i18n.changeLanguage(isEn ? "de" : "en");
 
   const handleThemeClick = (idx) => {
@@ -57,9 +48,7 @@ function App() {
     } else {
       setOpenSections([id]);
       const idsToAutoExpand =
-        subIds.length === 1
-          ? subIds
-          : subIds.filter((subId) => subId.includes("tech"));
+        subIds.length === 1 ? subIds : subIds.filter((s) => s.includes("tech"));
       setTimeout(
         () => setOpenSections((prev) => [...prev, ...idsToAutoExpand]),
         300,
@@ -67,21 +56,33 @@ function App() {
     }
   };
 
-  const handleSubToggle = (id) => {
-    setOpenSections((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
-    );
-  };
+  // Helper for the vertical text component to avoid repetition
+  const VerticalText = ({ color }) => (
+    <div className="absolute right-0 top-0 bottom-0 px-8 flex items-center justify-center pointer-events-none">
+      <p
+        className="[writing-mode:vertical-lr] rotate-180 text-xl lg:text-2xl font-bold tracking-[0.3em] lowercase whitespace-nowrap transition-colors duration-500"
+        style={{ color }}
+      >
+        {t("verticalText")}
+      </p>
+    </div>
+  );
 
   return (
     <div
-      className="h-screen w-full font-sans overflow-hidden flex relative selection:bg-current selection:text-white transition-colors duration-700"
+      className="h-screen w-full font-sans overflow-hidden flex relative transition-colors duration-700"
       style={{ backgroundColor: currentTheme.bg }}
     >
+      {/* 1. BASE VERTICAL TEXT (Current Theme Color) */}
+      <div className="hidden md:block">
+        <VerticalText color={currentTheme.text} />
+      </div>
+
+      {/* 2. THEME PREVIEW CIRCLE & OVERLAP TEXT */}
       <AnimatePresence mode="wait">
         {hoveredTheme !== null && hoveredTheme !== themeIndex && (
           <motion.div
-            key={`theme-circle-${hoveredTheme}`}
+            key={`theme-layer-${hoveredTheme}`}
             initial={{ clipPath: `circle(0% at ${CIRCLE_SETTINGS.origin})` }}
             animate={{
               clipPath: isExpanding
@@ -98,31 +99,46 @@ function App() {
               duration: isExpanding ? 0.8 : 0.5,
               ease: isExpanding ? [0.4, 0, 0.2, 1] : "circOut",
             }}
-            className="absolute inset-0 z-0 pointer-events-none"
+            className="absolute inset-0 z-10 pointer-events-none"
             style={{ backgroundColor: themes[hoveredTheme].bg }}
-          />
+          >
+            {/* This text is only visible where the circle clips it */}
+            <div className="hidden md:block h-full w-full relative">
+              <VerticalText color={themes[hoveredTheme].text} />
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="absolute inset-0 z-10 p-6 md:p-12 flex flex-col justify-between transition-colors duration-500">
+      {/* 3. MAIN INTERACTIVE CONTENT */}
+      <div className="absolute inset-0 z-20 p-6 md:p-12 flex flex-col justify-between">
         <Header
           t={t}
           isEn={isEn}
           toggleLang={toggleLang}
-          textColor={activeColor}
+          textColor={
+            isExpanding ? themes[hoveredTheme].text : currentTheme.text
+          }
         />
 
         <div className="space-y-8 md:space-y-12 my-12 overflow-y-auto no-scrollbar">
-          {/* WEB DESIGN SECTION */}
           <NavSection
             title="web design"
             id="web"
             t={t}
             theme={currentTheme}
-            textColor={activeColor}
+            textColor={
+              isExpanding ? themes[hoveredTheme].text : currentTheme.text
+            }
             openSections={openSections}
             onToggleLevel1={handleLevel1Toggle}
-            onToggleSub={handleSubToggle}
+            onToggleSub={(id) =>
+              setOpenSections((prev) =>
+                prev.includes(id)
+                  ? prev.filter((s) => s !== id)
+                  : [...prev, id],
+              )
+            }
             subItems={[
               {
                 id: "web-ex",
@@ -139,17 +155,23 @@ function App() {
               },
             ]}
           />
-
-          {/* STREAMING SECTION - Updated to use List Type */}
           <NavSection
             title="live streaming"
             id="stream"
             t={t}
             theme={currentTheme}
-            textColor={activeColor}
+            textColor={
+              isExpanding ? themes[hoveredTheme].text : currentTheme.text
+            }
             openSections={openSections}
             onToggleLevel1={handleLevel1Toggle}
-            onToggleSub={handleSubToggle}
+            onToggleSub={(id) =>
+              setOpenSections((prev) =>
+                prev.includes(id)
+                  ? prev.filter((s) => s !== id)
+                  : [...prev, id],
+              )
+            }
             subItems={[
               {
                 id: "stream-ex",
@@ -166,17 +188,23 @@ function App() {
               },
             ]}
           />
-
-          {/* ABOUT SECTION */}
           <NavSection
             title={t("about_me")}
             id="about"
             t={t}
             theme={currentTheme}
-            textColor={activeColor}
+            textColor={
+              isExpanding ? themes[hoveredTheme].text : currentTheme.text
+            }
             openSections={openSections}
             onToggleLevel1={handleLevel1Toggle}
-            onToggleSub={handleSubToggle}
+            onToggleSub={(id) =>
+              setOpenSections((prev) =>
+                prev.includes(id)
+                  ? prev.filter((s) => s !== id)
+                  : [...prev, id],
+              )
+            }
             subItems={[
               {
                 id: "about-details",
@@ -186,17 +214,23 @@ function App() {
               },
             ]}
           />
-
-          {/* CONTACT SECTION */}
           <NavSection
             title={t("contact_me")}
             id="contact"
             t={t}
             theme={currentTheme}
-            textColor={activeColor}
+            textColor={
+              isExpanding ? themes[hoveredTheme].text : currentTheme.text
+            }
             openSections={openSections}
             onToggleLevel1={handleLevel1Toggle}
-            onToggleSub={handleSubToggle}
+            onToggleSub={(id) =>
+              setOpenSections((prev) =>
+                prev.includes(id)
+                  ? prev.filter((s) => s !== id)
+                  : [...prev, id],
+              )
+            }
             subItems={[
               {
                 id: "contact-info",
@@ -216,23 +250,14 @@ function App() {
           isExpanding={isExpanding}
           onThemeClick={handleThemeClick}
           onHover={(idx) => !isExpanding && setHoveredTheme(idx)}
-          textColor={activeColor}
+          textColor={
+            isExpanding ? themes[hoveredTheme].text : currentTheme.text
+          }
           currentThemeName={
             isExpanding ? themes[hoveredTheme].name : currentTheme.name
           }
           tagline={t("tagline")}
         />
-      </div>
-
-      <div className="hidden md:block pointer-events-none">
-        <div className="absolute right-0 top-0 bottom-0 px-8 flex items-center justify-center z-20">
-          <p
-            className="[writing-mode:vertical-lr] rotate-180 text-xl lg:text-2xl font-bold tracking-[0.3em] opacity-80 lowercase whitespace-nowrap transition-colors duration-500"
-            style={{ color: activeColor }}
-          >
-            {t("verticalText")}
-          </p>
-        </div>
       </div>
     </div>
   );
