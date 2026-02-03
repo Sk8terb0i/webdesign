@@ -35,7 +35,7 @@ function App() {
   const activeColor = isExpanding
     ? themes[hoveredTheme].text
     : currentTheme.text;
-  const isEn = i18n.language === "en";
+  const isEn = i18n.language?.startsWith("en");
 
   const toggleLang = () => i18n.changeLanguage(isEn ? "de" : "en");
 
