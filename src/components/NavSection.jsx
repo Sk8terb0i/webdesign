@@ -98,13 +98,15 @@ const NavSection = ({
                             ))}
                           </ul>
                         ) : sub.type === "form" ? (
-                          <div className="pl-6 md:pl-8 py-8 pr-4">
-                            <WebInquiryForm
-                              textColor={textColor}
-                              t={t}
-                              theme={theme}
-                              hideHeading={true}
-                            />
+                          <div className="w-full flex justify-center py-8 px-4 md:px-0 md:justify-start md:pl-8">
+                            <div className="w-full max-w-md">
+                              <WebInquiryForm
+                                textColor={textColor}
+                                t={t}
+                                theme={theme}
+                                hideHeading={true}
+                              />
+                            </div>
                           </div>
                         ) : (
                           <div

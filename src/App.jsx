@@ -308,7 +308,7 @@ function App() {
   return (
     <div
       ref={containerRef}
-      className={`h-screen w-full font-sans overflow-hidden flex relative transition-colors duration-700 ${isDragging ? "cursor-grabbing" : "cursor-default"}`}
+      className={`min-h-screen w-full font-sans overflow-y-auto flex relative transition-colors duration-700 ${isDragging ? "cursor-grabbing" : "cursor-default"}`}
       style={{
         backgroundColor: currentTheme.bg,
         "--mouse-x": "95%",
