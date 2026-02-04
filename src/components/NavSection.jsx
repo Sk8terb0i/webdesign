@@ -1,5 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import WebInquiryForm from "./WebInquiryForm";
 
 const NavSection = ({
   title,
@@ -48,68 +49,86 @@ const NavSection = ({
             className="pl-12 md:pl-14 space-y-1 overflow-hidden"
             style={{ color: textColor }}
           >
-            {subItems.map((sub) => (
-              <div key={sub.id}>
-                <button
-                  onClick={() => onToggleSub(sub.id)}
-                  className="flex items-center gap-2 text-base font-bold outline-none cursor-pointer hover:opacity-70 hover:translate-x-1 transition-all duration-300 group/sub"
-                >
-                  <span
-                    className={`w-4 inline-flex justify-center transition-transform duration-500 ${!openSections.includes(sub.id) ? "group-hover/sub:rotate-90" : ""}`}
-                  >
-                    {openSections.includes(sub.id) ? "-" : "+"}
-                  </span>
-                  <span>{t(sub.labelKey)}</span>
-                </button>
+            {subItems.map((sub) => {
+              // hide the "inquiry form" link on desktop since it has its own floating panel
+              if (
+                sub.type === "form" &&
+                typeof window !== "undefined" &&
+                window.innerWidth > 768
+              )
+                return null;
 
-                {/* Technical List or Detail Text */}
-                <AnimatePresence>
-                  {openSections.includes(sub.id) && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
+              return (
+                <div key={sub.id}>
+                  <button
+                    onClick={() => onToggleSub(sub.id, id)}
+                    className="flex items-center gap-2 text-base font-bold outline-none cursor-pointer hover:opacity-70 hover:translate-x-1 transition-all duration-300 group/sub"
+                  >
+                    <span
+                      className={`w-4 inline-flex justify-center transition-transform duration-500 ${!openSections.includes(sub.id) ? "group-hover/sub:rotate-90" : ""}`}
                     >
-                      {sub.type === "list" ? (
-                        <ul className="mt-2 mb-4 space-y-3 pl-6 md:pl-8">
-                          {sub.items.map((i, idx) => (
-                            <li
-                              key={i}
-                              className="text-xs max-w-md flex gap-3 items-start"
-                              style={{ color: theme.level3 }}
-                            >
-                              <span className="font-mono text-[10px] mt-[3.5px] opacity-25">
-                                {(idx + 1).toString().padStart(2, "0")}
-                              </span>
-                              <span className="leading-relaxed">
-                                {t(`${sub.translationPrefix}${i}`)}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div
-                          className="pl-6 md:pl-8 py-2 text-xs max-w-md lowercase leading-relaxed"
-                          style={{ color: theme.level3 }}
-                        >
-                          {sub.contentIsLink ? (
-                            <a
-                              href={`mailto:${t(sub.contentKey)}`}
-                              className="font-bold hover:opacity-70"
-                            >
-                              {t(sub.contentKey)}
-                            </a>
-                          ) : (
-                            t(sub.contentKey)
-                          )}
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
+                      {openSections.includes(sub.id) ? "-" : "+"}
+                    </span>
+                    <span className="lowercase">{t(sub.labelKey)}</span>
+                  </button>
+
+                  <AnimatePresence>
+                    {openSections.includes(sub.id) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        {sub.type === "list" ? (
+                          <ul className="mt-2 mb-4 space-y-3 pl-6 md:pl-8">
+                            {sub.items.map((i, idx) => (
+                              <li
+                                key={i}
+                                className="text-xs max-w-md flex gap-3 items-start"
+                                style={{ color: theme.level3 }}
+                              >
+                                <span className="font-mono text-[10px] mt-[3.5px] opacity-25">
+                                  {(idx + 1).toString().padStart(2, "0")}
+                                </span>
+                                <span className="leading-relaxed lowercase">
+                                  {t(`${sub.translationPrefix}${i}`)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : sub.type === "form" ? (
+                          <div className="pl-6 md:pl-8 py-8 pr-4">
+                            <WebInquiryForm
+                              textColor={textColor}
+                              t={t}
+                              theme={theme}
+                              hideHeading={true}
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            className="pl-6 md:pl-8 py-2 text-xs max-w-md lowercase leading-relaxed"
+                            style={{ color: theme.level3 }}
+                          >
+                            {sub.contentIsLink ? (
+                              <a
+                                href={`mailto:${t(sub.contentKey)}`}
+                                className="font-bold hover:opacity-70"
+                              >
+                                {t(sub.contentKey)}
+                              </a>
+                            ) : (
+                              t(sub.contentKey)
+                            )}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>

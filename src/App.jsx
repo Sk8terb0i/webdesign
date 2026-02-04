@@ -55,7 +55,7 @@ const MainUIContent = React.memo(
     t,
     isEn,
     toggleLang,
-    theme, // Now correctly used
+    theme,
     textColor,
     openSections,
     handleLevel1Toggle,
@@ -68,6 +68,73 @@ const MainUIContent = React.memo(
   }) => {
     const isWebExpanded = openSections.includes("web");
 
+    const sectionsData = [
+      {
+        id: "web",
+        title: "web design",
+        subs: [
+          {
+            id: "web-ex",
+            labelKey: "examples",
+            type: "simple",
+            contentKey: "examples",
+          },
+          {
+            id: "web-tech",
+            labelKey: "web_technical",
+            type: "list",
+            items: [1, 2, 3, 4, 6, 7, 8],
+            translationPrefix: "web_p",
+          },
+          { id: "web-inquiry", labelKey: "form_title_web", type: "form" },
+        ],
+      },
+      {
+        id: "stream",
+        title: "live streaming",
+        subs: [
+          {
+            id: "stream-ex",
+            labelKey: "examples",
+            type: "simple",
+            contentKey: "examples",
+          },
+          {
+            id: "stream-tech",
+            labelKey: "stream_technical",
+            type: "list",
+            items: [1, 2, 3, 4, 5],
+            translationPrefix: "stream_p",
+          },
+        ],
+      },
+      {
+        id: "about",
+        title: t("about_me"),
+        subs: [
+          {
+            id: "about-details",
+            labelKey: "details",
+            type: "simple",
+            contentKey: "about_text",
+          },
+        ],
+      },
+      {
+        id: "contact",
+        title: t("contact_me"),
+        subs: [
+          {
+            id: "contact-info",
+            labelKey: "get_in_touch",
+            type: "simple",
+            contentKey: "contact_email",
+            contentIsLink: true,
+          },
+        ],
+      },
+    ];
+
     return (
       <div className="absolute inset-0 p-6 md:p-12 flex flex-col justify-between">
         <Header
@@ -79,71 +146,7 @@ const MainUIContent = React.memo(
 
         <div className="my-12 flex-grow flex flex-col justify-center">
           <div className="space-y-8 md:space-y-12 overflow-y-auto no-scrollbar">
-            {[
-              {
-                id: "web",
-                title: "web design",
-                subs: [
-                  {
-                    id: "web-ex",
-                    labelKey: "examples",
-                    type: "simple",
-                    contentKey: "examples",
-                  },
-                  {
-                    id: "web-tech",
-                    labelKey: "web_technical",
-                    type: "list",
-                    items: [1, 2, 3, 4, 6, 7, 8],
-                    translationPrefix: "web_p",
-                  },
-                ],
-              },
-              {
-                id: "stream",
-                title: "live streaming",
-                subs: [
-                  {
-                    id: "stream-ex",
-                    labelKey: "examples",
-                    type: "simple",
-                    contentKey: "examples",
-                  },
-                  {
-                    id: "stream-tech",
-                    labelKey: "stream_technical",
-                    type: "list",
-                    items: [1, 2, 3, 4, 5],
-                    translationPrefix: "stream_p",
-                  },
-                ],
-              },
-              {
-                id: "about",
-                title: t("about_me"),
-                subs: [
-                  {
-                    id: "about-details",
-                    labelKey: "details",
-                    type: "simple",
-                    contentKey: "about_text",
-                  },
-                ],
-              },
-              {
-                id: "contact",
-                title: t("contact_me"),
-                subs: [
-                  {
-                    id: "contact-info",
-                    labelKey: "get_in_touch",
-                    type: "simple",
-                    contentKey: "contact_email",
-                    contentIsLink: true,
-                  },
-                ],
-              },
-            ].map((sec) => (
+            {sectionsData.map((sec) => (
               <NavSection
                 key={sec.id}
                 title={sec.title}
@@ -153,19 +156,31 @@ const MainUIContent = React.memo(
                 textColor={textColor}
                 openSections={openSections}
                 onToggleLevel1={handleLevel1Toggle}
-                onToggleSub={(id) =>
-                  setOpenSections((prev) =>
-                    prev.includes(id)
-                      ? prev.filter((s) => s !== id)
-                      : [...prev, id],
-                  )
-                }
+                onToggleSub={(subId, parentId) => {
+                  setOpenSections((prev) => {
+                    const isOpening = !prev.includes(subId);
+                    if (isOpening) {
+                      const section = sectionsData.find(
+                        (s) => s.id === parentId,
+                      );
+                      const siblings = section
+                        ? section.subs.map((s) => s.id)
+                        : [];
+                      return [
+                        ...prev.filter((id) => !siblings.includes(id)),
+                        subId,
+                      ];
+                    }
+                    return prev.filter((s) => s !== subId);
+                  });
+                }}
                 subItems={sec.subs}
               />
             ))}
           </div>
         </div>
 
+        {/* desktop-only inquiry form panel */}
         <div className="hidden md:flex fixed inset-y-0 right-0 w-[66.6vw] pointer-events-none items-center justify-center z-40">
           <AnimatePresence>
             {isWebExpanded && (
@@ -177,8 +192,12 @@ const MainUIContent = React.memo(
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.4, ease: "circOut" }}
               >
-                {/* FIX: Passing theme object here is vital for PillButton colors */}
-                <WebInquiryForm textColor={textColor} t={t} theme={theme} />
+                <WebInquiryForm
+                  textColor={textColor}
+                  t={t}
+                  theme={theme}
+                  hideHeading={false}
+                />
               </motion.div>
             )}
           </AnimatePresence>

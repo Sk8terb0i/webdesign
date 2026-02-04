@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const WebInquiryForm = ({ textColor, t, theme }) => {
+const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
   const [step, setStep] = useState(1);
   const [wantsCall, setWantsCall] = useState(false);
   const [formData, setFormData] = useState({
@@ -70,17 +70,19 @@ const WebInquiryForm = ({ textColor, t, theme }) => {
 
   return (
     <div className="h-full flex flex-col lowercase" style={{ color: uiColor }}>
-      <header className="mb-6">
-        <h2
-          className="text-xl font-bold tracking-tighter mb-1 leading-none"
-          style={{ color: textColor }}
-        >
-          {t("form_title_web")}
-        </h2>
-        <p className="text-[10px] opacity-70 italic pr-4">
-          {t("form_subtitle")}
-        </p>
-      </header>
+      {!hideHeading && (
+        <header className="mb-6">
+          <h2
+            className="text-xl font-bold tracking-tighter mb-1 leading-none"
+            style={{ color: textColor }}
+          >
+            {t("form_title_web")}
+          </h2>
+          <p className="text-[10px] opacity-70 italic pr-4">
+            {t("form_subtitle")}
+          </p>
+        </header>
+      )}
 
       {/* Progress / Fast-Track Selection */}
       <div className="mb-8">
