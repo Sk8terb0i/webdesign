@@ -41,10 +41,10 @@ const ThemeControls = ({
             <button
               key={tItem.name}
               // Switch to onMouseDown to enable dragging
-              onMouseDown={(e) => onThemeMouseDown(idx, e)}
+              onPointerDown={(e) => onThemeMouseDown(idx, e)}
               onMouseEnter={() => onHover(idx)}
               onMouseLeave={() => onHover(null)}
-              className="relative w-6 h-6 flex items-center justify-center cursor-pointer outline-none"
+              className="relative w-6 h-6 flex items-center justify-center cursor-pointer outline-none touch-none"
             >
               <motion.div
                 animate={{

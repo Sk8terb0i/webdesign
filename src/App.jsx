@@ -361,7 +361,16 @@ function App() {
                 themeIndex={themeIndex}
                 hoveredTheme={hoveredTheme}
                 isExpanding={isExpanding}
-                onThemeMouseDown={() => {}}
+                onThemeMouseDown={(idx, e) => {
+                  if (idx === themeIndex || isExpanding) return;
+
+                  // 1. Update coordinates immediately so the circle doesn't jump from a previous position
+                  updateCursor(e);
+
+                  // 2. Set both states together to trigger the dragRadius animation
+                  setHoveredTheme(idx);
+                  setIsDragging(true);
+                }}
                 onHover={() => {}}
               />
             </motion.div>
