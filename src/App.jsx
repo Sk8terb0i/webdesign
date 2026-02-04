@@ -8,10 +8,34 @@ import ThemeControls from "./components/ThemeControls";
 import WebInquiryForm from "./components/WebInquiryForm";
 
 const themes = [
-  { name: "pink", bg: "#fce0e8", text: "#c61e3d", level3: "#232c2d" },
-  { name: "industrial", bg: "#f4f4f4", text: "#232c2d", level3: "#232c2d" },
-  { name: "midnight", bg: "#1a1a1a", text: "#e5e5e5", level3: "#a3a3a3" },
-  { name: "moss", bg: "#2d3436", text: "#fab1a0", level3: "#dfe6e9" },
+  {
+    name: "pink",
+    bg: "#fce0e8",
+    text: "#c61e3d",
+    level3: "#232c2d",
+    accent: "rgba(89, 114, 205, 0.1)", // #5972cd 10% opacity
+  },
+  {
+    name: "industrial",
+    bg: "#f4f4f4",
+    text: "#232c2d",
+    level3: "#232c2d",
+    accent: "rgba(35, 44, 45, 0.05)",
+  },
+  {
+    name: "midnight",
+    bg: "#1a1a1a",
+    text: "#e5e5e5",
+    level3: "#a3a3a3",
+    accent: "rgba(255, 255, 255, 0.03)",
+  },
+  {
+    name: "moss",
+    bg: "#2d3436",
+    text: "#fab1a0",
+    level3: "#dfe6e9",
+    accent: "rgba(250, 177, 160, 0.07)",
+  },
 ];
 
 const CIRCLE_SETTINGS = {
@@ -185,19 +209,34 @@ const MainUIContent = React.memo(
           <AnimatePresence>
             {isWebExpanded && (
               <motion.div
-                className="pointer-events-auto max-h-[75vh]"
-                style={{ width: "25vw" }}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.4, ease: "circOut" }}
+                className="relative flex items-center justify-center h-full"
+                style={{ width: "30vw" }} // The background width constraint
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
               >
-                <WebInquiryForm
-                  textColor={textColor}
-                  t={t}
-                  theme={theme}
-                  hideHeading={false}
+                {/* The Accent Rectangle - Absolute within the 30vw container */}
+                <div
+                  className="absolute inset-y-0 inset-x-0 z-[-1] transition-colors duration-700"
+                  style={{ backgroundColor: theme.accent }}
                 />
+
+                {/* The Form - Centered inside the 30vw container */}
+                <motion.div
+                  className="pointer-events-auto max-h-[75vh]"
+                  style={{ width: "25vw" }} // Original form width
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.4, ease: "circOut" }}
+                >
+                  <WebInquiryForm
+                    textColor={textColor}
+                    t={t}
+                    theme={theme}
+                    hideHeading={false}
+                  />
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
