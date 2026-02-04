@@ -218,7 +218,11 @@ const MainUIContent = React.memo(
               >
                 <div
                   className="absolute inset-y-0 inset-x-0 z-[-1] transition-colors duration-700"
-                  style={{ backgroundColor: theme.accent }}
+                  style={{
+                    /* Adding 'dd' for ~85% opacity. Use 'cc' for 80% or 'aa' for 66% */
+                    backgroundColor: `${theme.text}`,
+                    backdropFilter: "blur(8px)", // Optional: adds a nice glass effect to the background
+                  }}
                 />
                 <motion.div
                   className="pointer-events-auto w-full max-h-screen overflow-y-auto no-scrollbar py-20 flex justify-center"

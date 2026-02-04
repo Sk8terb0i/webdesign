@@ -46,7 +46,6 @@ const NavSection = ({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={springConfig}
-            // REMOVED pl-12 from here so children can use full width
             className="space-y-1 overflow-hidden"
             style={{ color: textColor }}
           >
@@ -58,28 +57,29 @@ const NavSection = ({
               )
                 return null;
 
+              const isSubOpen = openSections.includes(sub.id);
+
               return (
-                <div key={sub.id}>
-                  {/* Added pl-12 here to maintain the look for the labels */}
+                <div key={sub.id} className="relative">
                   <button
                     onClick={() => onToggleSub(sub.id, id)}
-                    className="flex items-center gap-2 text-base font-bold outline-none cursor-pointer hover:opacity-70 hover:translate-x-1 transition-all duration-300 group/sub pl-12 md:pl-14"
+                    className="flex items-center gap-2 text-base font-bold outline-none cursor-pointer hover:opacity-70 hover:translate-x-1 transition-all duration-300 group/sub pl-12 md:pl-14 relative z-20"
                   >
                     <span
-                      className={`w-4 inline-flex justify-center transition-transform duration-500 ${!openSections.includes(sub.id) ? "group-hover/sub:rotate-90" : ""}`}
+                      className={`w-4 inline-flex justify-center transition-transform duration-500 ${!isSubOpen ? "group-hover/sub:rotate-90" : ""}`}
                     >
-                      {openSections.includes(sub.id) ? "-" : "+"}
+                      {isSubOpen ? "-" : "+"}
                     </span>
                     <span className="lowercase">{t(sub.labelKey)}</span>
                   </button>
 
                   <AnimatePresence>
-                    {openSections.includes(sub.id) && (
+                    {isSubOpen && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
+                        className="overflow-hidden relative"
                       >
                         {sub.type === "list" ? (
                           <ul className="mt-2 mb-4 space-y-3 pl-[4.5rem] md:pl-[5rem]">
@@ -99,17 +99,25 @@ const NavSection = ({
                             ))}
                           </ul>
                         ) : sub.type === "form" ? (
-                          /* The form now has a clean slate. 
-                             w-full + justify-center centers it on the whole screen.
-                          */
-                          <div className="w-full flex justify-center md:justify-start md:pl-20 py-6 px-6">
-                            <div className="w-full max-w-md">
-                              <WebInquiryForm
-                                textColor={textColor}
-                                t={t}
-                                theme={theme}
-                                hideHeading={true}
-                              />
+                          <div className="w-full relative mt-4">
+                            {/* MOBILE BACKGROUND RECTANGLE - FULL OPACITY */}
+                            <div
+                              className="absolute inset-0 z-0"
+                              style={{
+                                backgroundColor: theme.text,
+                                backdropFilter: "blur(8px)",
+                              }}
+                            />
+
+                            <div className="relative z-10 w-full flex justify-center py-12 px-6">
+                              <div className="w-full max-w-md">
+                                <WebInquiryForm
+                                  textColor={textColor}
+                                  t={t}
+                                  theme={theme}
+                                  hideHeading={true}
+                                />
+                              </div>
                             </div>
                           </div>
                         ) : (

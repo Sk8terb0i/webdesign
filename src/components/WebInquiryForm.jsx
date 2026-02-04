@@ -24,8 +24,11 @@ const WebInquiryForm = ({ t, theme, hideHeading = false }) => {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  const uiColor = theme.level3;
-  const bgColor = theme.bg;
+  // INVERTED COLOR LOGIC
+  // The UI elements inside the form take the site's background color
+  const uiColor = theme.bg;
+  // The "fill" for selected items takes the site's text color
+  const bgColor = theme.text;
 
   const update = (field, val) => {
     setShowError(false);
@@ -84,7 +87,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false }) => {
       className="flex items-center justify-between w-full px-4 py-3 text-[11px] tracking-wider transition-all duration-200 border mb-2 group cursor-pointer"
       style={{
         color: selected ? bgColor : uiColor,
-        borderColor: selected ? uiColor : `${uiColor}22`,
+        borderColor: selected ? uiColor : `${uiColor}44`,
         backgroundColor: selected ? uiColor : "transparent",
       }}
     >
@@ -141,7 +144,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false }) => {
                 className="h-1 flex-grow transition-all duration-300 cursor-pointer hover:opacity-60"
                 style={{
                   backgroundColor: uiColor,
-                  opacity: step === s || isStepComplete(s) ? 1 : 0.1,
+                  opacity: step === s || isStepComplete(s) ? 1 : 0.15,
                 }}
               />
             ))}
@@ -159,6 +162,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false }) => {
               setShowError(false);
             }}
             className="text-[9px] tracking-[0.2em] underline underline-offset-4 cursor-pointer"
+            style={{ color: uiColor }}
           >
             {wantsCall ? t("back_to_form") : t("form_skip_to_call")}
           </button>
@@ -180,7 +184,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false }) => {
                 </label>
                 <input
                   placeholder="+41..."
-                  className="w-full bg-transparent border-b py-3 text-lg outline-none placeholder:opacity-20"
+                  className="w-full bg-transparent border-b py-3 text-lg outline-none placeholder:opacity-30"
                   style={{ borderColor: uiColor, color: uiColor }}
                   onChange={(e) => update("contact", e.target.value)}
                   value={formData.contact}
@@ -191,7 +195,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false }) => {
                   {t("form_message_label")} ({t("optional")})
                 </label>
                 <textarea
-                  className="w-full bg-transparent border p-4 text-sm h-40 outline-none resize-none placeholder:opacity-20"
+                  className="w-full bg-transparent border p-4 text-sm h-40 outline-none resize-none placeholder:opacity-30"
                   style={{ borderColor: `${uiColor}44`, color: uiColor }}
                   onChange={(e) => update("details", e.target.value)}
                   value={formData.details}
