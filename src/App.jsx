@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "./components/Header";
 import NavSection from "./components/NavSection";
 import ThemeControls from "./components/ThemeControls";
+import WebInquiryForm from "./components/WebInquiryForm";
 
 const themes = [
   { name: "pink", bg: "#fce0e8", text: "#c61e3d", level3: "#232c2d" },
@@ -19,10 +20,6 @@ const CIRCLE_SETTINGS = {
   expandRadius: "150%",
 };
 
-/**
- * 1. REFINED DRAG INDICATOR
- * Label placed 10px above pointer, lowercase and translated.
- */
 const DragIndicator = ({ color, isDragging, isExpanding, t }) => (
   <motion.div
     initial={{ opacity: 0 }}
@@ -53,15 +50,12 @@ const DragIndicator = ({ color, isDragging, isExpanding, t }) => (
   </motion.div>
 );
 
-/**
- * 2. MEMOIZED UI CONTENT
- */
 const MainUIContent = React.memo(
   ({
     t,
     isEn,
     toggleLang,
-    theme,
+    theme, // Now correctly used
     textColor,
     openSections,
     handleLevel1Toggle,
@@ -71,110 +65,139 @@ const MainUIContent = React.memo(
     isExpanding,
     onThemeMouseDown,
     onHover,
-  }) => (
-    <div className="absolute inset-0 p-6 md:p-12 flex flex-col justify-between">
-      <Header t={t} isEn={isEn} toggleLang={toggleLang} textColor={textColor} />
+  }) => {
+    const isWebExpanded = openSections.includes("web");
 
-      <div className="space-y-8 md:space-y-12 my-12 overflow-y-auto no-scrollbar">
-        {[
-          {
-            id: "web",
-            title: "web design",
-            subs: [
+    return (
+      <div className="absolute inset-0 p-6 md:p-12 flex flex-col justify-between">
+        <Header
+          t={t}
+          isEn={isEn}
+          toggleLang={toggleLang}
+          textColor={textColor}
+        />
+
+        <div className="my-12 flex-grow flex flex-col justify-center">
+          <div className="space-y-8 md:space-y-12 overflow-y-auto no-scrollbar">
+            {[
               {
-                id: "web-ex",
-                labelKey: "examples",
-                type: "simple",
-                contentKey: "examples",
+                id: "web",
+                title: "web design",
+                subs: [
+                  {
+                    id: "web-ex",
+                    labelKey: "examples",
+                    type: "simple",
+                    contentKey: "examples",
+                  },
+                  {
+                    id: "web-tech",
+                    labelKey: "web_technical",
+                    type: "list",
+                    items: [1, 2, 3, 4, 6, 7, 8],
+                    translationPrefix: "web_p",
+                  },
+                ],
               },
               {
-                id: "web-tech",
-                labelKey: "web_technical",
-                type: "list",
-                items: [1, 2, 3, 4, 6, 7, 8],
-                translationPrefix: "web_p",
+                id: "stream",
+                title: "live streaming",
+                subs: [
+                  {
+                    id: "stream-ex",
+                    labelKey: "examples",
+                    type: "simple",
+                    contentKey: "examples",
+                  },
+                  {
+                    id: "stream-tech",
+                    labelKey: "stream_technical",
+                    type: "list",
+                    items: [1, 2, 3, 4, 5],
+                    translationPrefix: "stream_p",
+                  },
+                ],
               },
-            ],
-          },
-          {
-            id: "stream",
-            title: "live streaming",
-            subs: [
               {
-                id: "stream-ex",
-                labelKey: "examples",
-                type: "simple",
-                contentKey: "examples",
+                id: "about",
+                title: t("about_me"),
+                subs: [
+                  {
+                    id: "about-details",
+                    labelKey: "details",
+                    type: "simple",
+                    contentKey: "about_text",
+                  },
+                ],
               },
               {
-                id: "stream-tech",
-                labelKey: "stream_technical",
-                type: "list",
-                items: [1, 2, 3, 4, 5],
-                translationPrefix: "stream_p",
+                id: "contact",
+                title: t("contact_me"),
+                subs: [
+                  {
+                    id: "contact-info",
+                    labelKey: "get_in_touch",
+                    type: "simple",
+                    contentKey: "contact_email",
+                    contentIsLink: true,
+                  },
+                ],
               },
-            ],
-          },
-          {
-            id: "about",
-            title: t("about_me"),
-            subs: [
-              {
-                id: "about-details",
-                labelKey: "details",
-                type: "simple",
-                contentKey: "about_text",
-              },
-            ],
-          },
-          {
-            id: "contact",
-            title: t("contact_me"),
-            subs: [
-              {
-                id: "contact-info",
-                labelKey: "get_in_touch",
-                type: "simple",
-                contentKey: "contact_email",
-                contentIsLink: true,
-              },
-            ],
-          },
-        ].map((sec) => (
-          <NavSection
-            key={sec.id}
-            title={sec.title}
-            id={sec.id}
-            t={t}
-            theme={theme}
-            textColor={textColor}
-            openSections={openSections}
-            onToggleLevel1={handleLevel1Toggle}
-            onToggleSub={(id) =>
-              setOpenSections((prev) =>
-                prev.includes(id)
-                  ? prev.filter((s) => s !== id)
-                  : [...prev, id],
-              )
-            }
-            subItems={sec.subs}
-          />
-        ))}
+            ].map((sec) => (
+              <NavSection
+                key={sec.id}
+                title={sec.title}
+                id={sec.id}
+                t={t}
+                theme={theme}
+                textColor={textColor}
+                openSections={openSections}
+                onToggleLevel1={handleLevel1Toggle}
+                onToggleSub={(id) =>
+                  setOpenSections((prev) =>
+                    prev.includes(id)
+                      ? prev.filter((s) => s !== id)
+                      : [...prev, id],
+                  )
+                }
+                subItems={sec.subs}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="hidden md:flex fixed inset-y-0 right-0 w-[66.6vw] pointer-events-none items-center justify-center z-40">
+          <AnimatePresence>
+            {isWebExpanded && (
+              <motion.div
+                className="pointer-events-auto max-h-[75vh]"
+                style={{ width: "25vw" }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.4, ease: "circOut" }}
+              >
+                {/* FIX: Passing theme object here is vital for PillButton colors */}
+                <WebInquiryForm textColor={textColor} t={t} theme={theme} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <ThemeControls
+          themes={themes}
+          themeIndex={themeIndex}
+          hoveredTheme={hoveredTheme}
+          isExpanding={isExpanding}
+          onThemeMouseDown={onThemeMouseDown}
+          onHover={onHover}
+          textColor={textColor}
+          currentThemeName={theme.name}
+          tagline={t("tagline")}
+        />
       </div>
-
-      <ThemeControls
-        themes={themes}
-        themeIndex={themeIndex}
-        hoveredTheme={hoveredTheme}
-        isExpanding={isExpanding}
-        onThemeMouseDown={onThemeMouseDown}
-        onHover={onHover}
-        textColor={textColor}
-        currentThemeName={theme.name}
-        tagline={t("tagline")}
-      />
-    </div>
-  ),
+    );
+  },
 );
 
 function App() {
@@ -182,7 +205,6 @@ function App() {
   const containerRef = useRef(null);
 
   const [openSections, setOpenSections] = useState([]);
-
   const [themeIndex, setThemeIndex] = useState(() => {
     const saved = localStorage.getItem("selectedThemeIndex");
     return saved !== null ? parseInt(saved, 10) : 0;
@@ -198,13 +220,10 @@ function App() {
 
   const updateCursor = useCallback((e) => {
     if (!containerRef.current) return;
-
-    // Support both mouse and touch points
     const clientX =
       e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
     const clientY =
       e.clientY ?? (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-
     const xPct = (clientX / window.innerWidth) * 100;
     const yPct = (clientY / window.innerHeight) * 100;
     containerRef.current.style.setProperty("--mouse-x", `${xPct}%`);
@@ -219,9 +238,7 @@ function App() {
       }
       setIsExpanding(true);
       setIsDragging(false);
-
       localStorage.setItem("selectedThemeIndex", idx);
-
       setTimeout(() => setThemeIndex(idx), 450);
       setTimeout(() => {
         setIsExpanding(false);
@@ -236,13 +253,10 @@ function App() {
   );
 
   useEffect(() => {
-    const handleMove = (e) => {
-      if (hoveredTheme !== null || isDragging) updateCursor(e);
-    };
+    const handleMove = (e) =>
+      (hoveredTheme !== null || isDragging) && updateCursor(e);
     const handleUp = () =>
       isDragging && hoveredTheme !== null && finalizeTheme(hoveredTheme);
-
-    // Pointer events handle both Mouse and Touch
     window.addEventListener("pointermove", handleMove);
     window.addEventListener("pointerup", handleUp);
     return () => {
@@ -275,13 +289,11 @@ function App() {
   return (
     <div
       ref={containerRef}
-      className={`h-screen w-full font-sans overflow-hidden flex relative transition-colors duration-700 
-        ${isDragging ? "cursor-grabbing" : "cursor-default"}`}
+      className={`h-screen w-full font-sans overflow-hidden flex relative transition-colors duration-700 ${isDragging ? "cursor-grabbing" : "cursor-default"}`}
       style={{
         backgroundColor: currentTheme.bg,
         "--mouse-x": "95%",
         "--mouse-y": "95%",
-        // Disable touch scroll only when dragging to avoid interference
         touchAction: isDragging ? "none" : "auto",
       }}
     >
@@ -363,11 +375,7 @@ function App() {
                 isExpanding={isExpanding}
                 onThemeMouseDown={(idx, e) => {
                   if (idx === themeIndex || isExpanding) return;
-
-                  // 1. Update coordinates immediately so the circle doesn't jump from a previous position
                   updateCursor(e);
-
-                  // 2. Set both states together to trigger the dragRadius animation
                   setHoveredTheme(idx);
                   setIsDragging(true);
                 }}
