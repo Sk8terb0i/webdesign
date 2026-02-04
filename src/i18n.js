@@ -10,8 +10,8 @@ const resources = {
       tagline: "A simple, good looking solution without any monthly costs",
       verticalText: "Modern. Simple. Yours.",
       drag_explore: "Drag to explore",
-      about_me: "About me",
-      contact_me: "Contact",
+      about_me: "about me",
+      contact_me: "contact",
       examples: "Examples",
       details: "Details",
       get_in_touch: "Get in touch",
@@ -49,7 +49,7 @@ const resources = {
       section_2: "What should it be able to do?",
       section_3: "How should it look and feel?",
       section_4: "What about the logistics?",
-      get_in_touch: "How can I reach you?",
+      get_in_touch_out: "How can I reach you?",
 
       // --- Inquiry Form: Questions & Labels ---
       form_scope_new: "A brand new website",
@@ -92,12 +92,24 @@ const resources = {
       form_app_signal: "Signal",
       form_app_telegram: "Telegram",
       form_app_sms: "SMS",
-      form_skip_to_call: "I'd rather just discuss this over a phone call",
+      form_skip_to_call: "I'd rather have a phone call",
       form_phone_label: "Phone number",
       form_message_label: "Anything I should know before we call?",
 
+      // --- Missing Keys ---
+      direct_contact: "direct inquiry",
+      back_to_form: "back to form",
+      step: "step",
       button_next: "next step",
       button_back: "go back",
+
+      // --- Submit Stuff ---
+      form_style_placeholder: "e.g. clean, dark mode, high contrast...",
+      form_error_required: "Please complete all required steps first.",
+      form_success_title: "Thank you!",
+      form_success_body:
+        "Your inquiry has been sent. I will get back to you soon.",
+      optional: "optional",
     },
   },
   de: {
@@ -107,8 +119,8 @@ const resources = {
       tagline: "Eine einfache, gut aussehende Lösung ohne monatliche Kosten",
       verticalText: "Modern. Einfach. Deins.",
       drag_explore: "Maus gedrückt halten und erkunden",
-      about_me: "Über mich",
-      contact_me: "Kontakt",
+      about_me: "über mich",
+      contact_me: "kontakt",
       examples: "Beispiele",
       details: "Details",
       get_in_touch: "Schreib mir",
@@ -142,7 +154,7 @@ const resources = {
       section_2: "Was soll die Seite können?",
       section_3: "Wie soll sie sich anfühlen?",
       section_4: "Wie sieht der Rahmen aus?",
-      get_in_touch: "Wie erreiche ich dich?",
+      get_in_touch_out: "Wie erreiche ich dich?",
 
       // --- Inquiry Form: Questions & Labels ---
       form_scope_new: "Eine ganz neue Website",
@@ -185,12 +197,25 @@ const resources = {
       form_app_signal: "Signal",
       form_app_telegram: "Telegram",
       form_app_sms: "SMS",
-      form_skip_to_call: "Ich möchte das lieber direkt am Telefon besprechen",
+      form_skip_to_call: "Ich möchte lieber direkt telefonieren",
       form_phone_label: "Telefonnummer",
       form_message_label: "Gibt es etwas, das ich vorab wissen sollte?",
 
+      // --- Missing Keys ---
+      direct_contact: "Direktanfrage",
+      back_to_form: "Zurück zum Formular",
+      step: "Schritt",
       button_next: "nächster schritt",
       button_back: "zurück",
+
+      // --- Submit Stuff ---
+      form_style_placeholder: "z.B. sauber, Dark-Mode, hoher Kontrast...",
+      form_error_required:
+        "Bitte fülle zuerst alle erforderlichen Schritte aus.",
+      form_success_title: "Vielen Dank!",
+      form_success_body:
+        "Deine Anfrage wurde gesendet. Ich melde mich bald bei dir.",
+      optional: "optional",
     },
   },
 };

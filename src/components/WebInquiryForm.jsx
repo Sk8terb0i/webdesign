@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
+const WebInquiryForm = ({ t, theme, hideHeading = false }) => {
   const [step, setStep] = useState(1);
   const [wantsCall, setWantsCall] = useState(false);
-  const [formData, setFormData] = useState({
+  const [submitted, setSubmitted] = useState(false);
+  const [showError, setShowError] = useState(false);
+
+  const initialFormState = {
     type: "",
     pages: "",
-    deadline: "",
     features: [],
     assets: "",
     copy: "",
@@ -18,52 +20,112 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
     channel: "",
     chatApp: "whatsapp",
     details: "",
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
 
   const uiColor = theme.level3;
-  const update = (field, val) =>
+  const bgColor = theme.bg;
+
+  const update = (field, val) => {
+    setShowError(false);
     setFormData((prev) => ({ ...prev, [field]: val }));
+  };
 
   const toggleFeat = (f) => {
+    setShowError(false);
     const next = formData.features.includes(f)
       ? formData.features.filter((x) => x !== f)
       : [...formData.features, f];
     update("features", next);
   };
 
+  const isStepComplete = (s) => {
+    switch (s) {
+      case 1:
+        return !!(formData.type && formData.pages);
+      case 2:
+        return formData.features.length > 0;
+      case 3:
+        return !!(formData.assets && formData.copy);
+      case 4:
+        return !!(formData.hosting && formData.budget);
+      case 5:
+        return !!(formData.contact && formData.channel);
+      default:
+        return false;
+    }
+  };
+
+  const canSubmit = wantsCall
+    ? !!formData.contact
+    : [1, 2, 3, 4, 5].every((s) => isStepComplete(s));
+
+  const handleSubmit = () => {
+    if (!canSubmit) {
+      setShowError(true);
+      return;
+    }
+    setSubmitted(true);
+
+    setTimeout(() => {
+      setSubmitted(false);
+      setStep(1);
+      setWantsCall(false);
+      setFormData(initialFormState);
+      setShowError(false);
+    }, 6000);
+  };
+
   const Choice = ({ label, selected, onClick, isCheck = false }) => (
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-3 py-1.5 text-xs text-left transition-all group cursor-pointer"
-      style={{ color: uiColor }}
+      className="flex items-center justify-between w-full px-4 py-3 text-[11px] tracking-wider transition-all duration-200 border mb-2 group cursor-pointer"
+      style={{
+        color: selected ? bgColor : uiColor,
+        borderColor: selected ? uiColor : `${uiColor}22`,
+        backgroundColor: selected ? uiColor : "transparent",
+      }}
     >
+      <span style={{ fontWeight: selected ? "600" : "400" }}>{label}</span>
       <div
-        className={`w-3.5 h-3.5 border transition-all duration-200 ${isCheck ? "rounded-sm" : "rounded-full"}`}
+        className={`w-1.5 h-1.5 transition-all duration-300 ${isCheck ? "rotate-45" : "rounded-full"}`}
         style={{
-          borderColor: uiColor,
-          backgroundColor: selected ? uiColor : "transparent",
+          backgroundColor: selected ? bgColor : "transparent",
+          border: `1px solid ${selected ? bgColor : uiColor}`,
+          opacity: selected ? 1 : 0.3,
         }}
       />
-      <span style={{ fontWeight: selected ? "600" : "400" }}>{label}</span>
     </button>
   );
 
-  const handleSubmit = () => {
-    console.log("inquiry submitted:", { ...formData, wantsCall });
-  };
+  if (submitted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="w-full h-64 flex flex-col items-center justify-center text-center space-y-4"
+        style={{ color: uiColor }}
+      >
+        <h2 className="text-2xl font-bold tracking-tighter leading-none">
+          {t("form_success_title")}
+        </h2>
+        <p className="text-sm opacity-60 tracking-widest max-w-[280px] leading-relaxed">
+          {t("form_success_body")}
+        </p>
+      </motion.div>
+    );
+  }
 
   return (
-    <div className="h-full flex flex-col" style={{ color: uiColor }}>
+    <div className="w-full flex flex-col font-sans" style={{ color: uiColor }}>
       {!hideHeading && (
-        <header className="mb-6">
-          <h2
-            className="text-xl font-bold tracking-tighter mb-1 leading-none"
-            style={{ color: textColor }}
-          >
+        <header className="mb-8">
+          <h2 className="text-2xl font-bold tracking-tighter mb-2 leading-none">
             {t("form_title_web")}
           </h2>
-          <p className="text-[10px] opacity-70 italic pr-4">
+          <p className="text-[10px] opacity-60 tracking-widest">
             {t("form_subtitle")}
           </p>
         </header>
@@ -71,75 +133,69 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
 
       <div className="mb-8">
         {!wantsCall && (
-          <div className="flex gap-2 mb-6">
+          <div className="flex gap-1 mb-6">
             {[1, 2, 3, 4, 5].map((s) => (
-              <div
+              <button
                 key={s}
-                className="h-0.5 flex-grow transition-all duration-500"
+                onClick={() => setStep(s)}
+                className="h-1 flex-grow transition-all duration-300 cursor-pointer hover:opacity-60"
                 style={{
                   backgroundColor: uiColor,
-                  opacity: step >= s ? 1 : 0.15,
+                  opacity: step === s || isStepComplete(s) ? 1 : 0.1,
                 }}
               />
             ))}
           </div>
         )}
 
-        {step === 1 && (
-          <div
-            className="pb-4 border-b mb-6"
-            style={{ borderColor: `${uiColor}22` }}
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[9px] tracking-[0.2em] opacity-50">
+            {wantsCall ? t("direct_contact") : `${t("step")} ${step} / 5`}
+          </span>
+          <button
+            onClick={() => {
+              setWantsCall(!wantsCall);
+              setStep(1);
+              setShowError(false);
+            }}
+            className="text-[9px] tracking-[0.2em] underline underline-offset-4 cursor-pointer"
           >
-            <Choice
-              label={t("form_skip_to_call")}
-              selected={wantsCall}
-              onClick={() => {
-                setWantsCall(!wantsCall);
-                setStep(1);
-              }}
-            />
-          </div>
-        )}
+            {wantsCall ? t("back_to_form") : t("form_skip_to_call")}
+          </button>
+        </div>
       </div>
 
-      <div className="flex-grow overflow-y-auto no-scrollbar pr-4">
+      <div className="flex-grow min-h-[350px]">
         <AnimatePresence mode="wait">
           {wantsCall ? (
             <motion.section
-              key="call-only"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              key="call"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
             >
-              <div className="space-y-8">
-                <div>
-                  <h3
-                    className="text-[11px] font-bold tracking-widest mb-3"
-                    style={{ color: textColor }}
-                  >
-                    {t("form_phone_label")}
-                  </h3>
-                  <input
-                    placeholder="+41..."
-                    className="w-full border-b bg-transparent py-2 text-sm outline-none placeholder:opacity-40 cursor-text"
-                    style={{ borderColor: uiColor, color: uiColor }}
-                    onChange={(e) => update("contact", e.target.value)}
-                    value={formData.contact}
-                  />
-                </div>
-                <div>
-                  <h3
-                    className="text-[11px] font-bold tracking-widest mb-3"
-                    style={{ color: textColor }}
-                  >
-                    {t("form_message_label")}
-                  </h3>
-                  <textarea
-                    className="w-full border bg-transparent p-4 text-sm h-32 outline-none resize-none placeholder:opacity-40 cursor-text"
-                    style={{ borderColor: uiColor, color: uiColor }}
-                    onChange={(e) => update("details", e.target.value)}
-                    value={formData.details}
-                  />
-                </div>
+              <div>
+                <label className="text-[10px] tracking-widest block mb-4 opacity-70">
+                  {t("form_phone_label")}
+                </label>
+                <input
+                  placeholder="+41..."
+                  className="w-full bg-transparent border-b py-3 text-lg outline-none placeholder:opacity-20"
+                  style={{ borderColor: uiColor, color: uiColor }}
+                  onChange={(e) => update("contact", e.target.value)}
+                  value={formData.contact}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] tracking-widest block mb-4 opacity-70">
+                  {t("form_message_label")} ({t("optional")})
+                </label>
+                <textarea
+                  className="w-full bg-transparent border p-4 text-sm h-40 outline-none resize-none placeholder:opacity-20"
+                  style={{ borderColor: `${uiColor}44`, color: uiColor }}
+                  onChange={(e) => update("details", e.target.value)}
+                  value={formData.details}
+                />
               </div>
             </motion.section>
           ) : (
@@ -147,56 +203,36 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
               {step === 1 && (
                 <motion.section
                   key="s1"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                 >
-                  <div className="space-y-8">
-                    <div>
-                      <h3
-                        className="text-[11px] font-bold tracking-widest mb-6"
-                        style={{ color: textColor }}
-                      >
-                        {t("section_1")}
-                      </h3>
-                      <div className="flex flex-col gap-1">
-                        {["new", "redesign", "landing"].map((type) => (
-                          <Choice
-                            key={type}
-                            label={t(`form_scope_${type}`)}
-                            selected={formData.type === type}
-                            onClick={() => update("type", type)}
-                          />
-                        ))}
-                      </div>
+                  <h3 className="text-sm font-bold tracking-tighter mb-6">
+                    {t("section_1")}
+                  </h3>
+                  <div className="flex flex-col gap-1">
+                    {["new", "redesign", "landing"].map((type) => (
+                      <Choice
+                        key={type}
+                        label={t(`form_scope_${type}`)}
+                        selected={formData.type === type}
+                        onClick={() => update("type", type)}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-8">
+                    <h3 className="text-[10px] tracking-widest mb-4 opacity-70">
+                      {t("form_pages_label")}
+                    </h3>
+                    <div className="flex flex-col gap-1">
+                      {["1-5", "5-10", "10+"].map((p) => (
+                        <Choice
+                          key={p}
+                          label={p}
+                          selected={formData.pages === p}
+                          onClick={() => update("pages", p)}
+                        />
+                      ))}
                     </div>
-
-                    <div>
-                      <h3
-                        className="text-[11px] font-bold tracking-widest mb-3"
-                        style={{ color: textColor }}
-                      >
-                        {t("form_pages_label")}
-                      </h3>
-                      <div className="flex flex-col gap-1">
-                        {["1-5", "5-10", "10+"].map((p) => (
-                          <Choice
-                            key={p}
-                            label={p}
-                            selected={formData.pages === p}
-                            onClick={() => update("pages", p)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <input
-                      placeholder={t("form_deadline")}
-                      className="w-full border-b bg-transparent py-2 text-sm outline-none placeholder:opacity-40 cursor-text"
-                      style={{ borderColor: uiColor, color: uiColor }}
-                      onChange={(e) => update("deadline", e.target.value)}
-                      value={formData.deadline}
-                    />
                   </div>
                 </motion.section>
               )}
@@ -204,14 +240,10 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
               {step === 2 && (
                 <motion.section
                   key="s2"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                 >
-                  <h3
-                    className="text-[11px] font-bold tracking-widest mb-6"
-                    style={{ color: textColor }}
-                  >
+                  <h3 className="text-sm font-bold tracking-tighter mb-6">
                     {t("section_2")}
                   </h3>
                   <div className="flex flex-col gap-1">
@@ -239,17 +271,13 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
               {step === 3 && (
                 <motion.section
                   key="s3"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                 >
-                  <h3
-                    className="text-[11px] font-bold tracking-widest mb-6"
-                    style={{ color: textColor }}
-                  >
+                  <h3 className="text-sm font-bold tracking-tighter mb-6">
                     {t("section_3")}
                   </h3>
-                  <div className="space-y-8">
+                  <div className="space-y-4">
                     <div className="flex flex-col gap-1">
                       <Choice
                         label={t("form_assets_ready")}
@@ -274,13 +302,18 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
                         onClick={() => update("copy", "need")}
                       />
                     </div>
-                    <input
-                      placeholder={t("form_style_label")}
-                      className="w-full border-b bg-transparent py-2 text-sm outline-none placeholder:opacity-40 cursor-text"
-                      style={{ borderColor: uiColor, color: uiColor }}
-                      onChange={(e) => update("style", e.target.value)}
-                      value={formData.style}
-                    />
+                    <div>
+                      <label className="text-[10px] tracking-widest block mt-4 opacity-70">
+                        {t("form_style_label")} ({t("optional")})
+                      </label>
+                      <input
+                        placeholder={t("form_style_placeholder")}
+                        className="w-full border-b bg-transparent py-4 text-sm outline-none placeholder:opacity-30"
+                        style={{ borderColor: uiColor, color: uiColor }}
+                        onChange={(e) => update("style", e.target.value)}
+                        value={formData.style}
+                      />
+                    </div>
                   </div>
                 </motion.section>
               )}
@@ -288,36 +321,27 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
               {step === 4 && (
                 <motion.section
                   key="s4"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                 >
-                  <div className="space-y-8">
-                    <div>
-                      <h3
-                        className="text-[11px] font-bold tracking-widest mb-6"
-                        style={{ color: textColor }}
-                      >
-                        {t("section_4")}
-                      </h3>
-                      <div className="flex flex-col gap-1">
+                  <h3 className="text-sm font-bold tracking-tighter mb-6">
+                    {t("section_4")}
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="flex flex-col gap-1">
+                      {["github", "external"].map((h) => (
                         <Choice
-                          label={t("form_host_free")}
-                          selected={formData.hosting === "github"}
-                          onClick={() => update("hosting", "github")}
+                          key={h}
+                          label={t(
+                            `form_host_${h === "github" ? "free" : "ext"}`,
+                          )}
+                          selected={formData.hosting === h}
+                          onClick={() => update("hosting", h)}
                         />
-                        <Choice
-                          label={t("form_host_ext")}
-                          selected={formData.hosting === "external"}
-                          onClick={() => update("hosting", "external")}
-                        />
-                      </div>
+                      ))}
                     </div>
                     <div>
-                      <h3
-                        className="text-[11px] font-bold tracking-widest mb-3"
-                        style={{ color: textColor }}
-                      >
+                      <h3 className="text-[10px] tracking-widest mb-4 opacity-70">
                         {t("form_budget_label")}
                       </h3>
                       <div className="flex flex-col gap-1">
@@ -338,64 +362,71 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
               {step === 5 && (
                 <motion.section
                   key="s5"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                 >
-                  <h3
-                    className="text-[11px] font-bold tracking-widest mb-6"
-                    style={{ color: textColor }}
-                  >
-                    {t("get_in_touch")}
+                  <h3 className="text-sm font-bold tracking-tighter mb-6">
+                    {t("get_in_touch_out")}
                   </h3>
                   <input
                     placeholder={t("form_contact_placeholder")}
-                    className="w-full border-b bg-transparent py-3 text-sm outline-none placeholder:opacity-40 mb-6 cursor-text"
+                    className="w-full border-b bg-transparent py-4 text-lg outline-none placeholder:opacity-30 mb-8"
                     style={{ borderColor: uiColor, color: uiColor }}
                     onChange={(e) => update("contact", e.target.value)}
                     value={formData.contact}
                   />
-                  <div className="flex flex-wrap gap-4 mb-2">
-                    {["chat", "email", "call"].map((c) => (
+                  <div className="flex flex-col gap-1 mb-6">
+                    {["email", "call", "chat"].map((ch) => (
                       <Choice
-                        key={c}
-                        label={t(`form_channel_${c}`)}
-                        selected={formData.channel === c}
-                        onClick={() => update("channel", c)}
+                        key={ch}
+                        label={t(`form_channel_${ch}`)}
+                        selected={formData.channel === ch}
+                        onClick={() => update("channel", ch)}
                       />
                     ))}
+                    <AnimatePresence>
+                      {formData.channel === "chat" && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="grid grid-cols-2 gap-1 mb-4">
+                            {["whatsapp", "signal", "telegram", "sms"].map(
+                              (app) => (
+                                <button
+                                  key={app}
+                                  onClick={() => update("chatApp", app)}
+                                  className="py-2 text-[9px] border tracking-widest transition-all"
+                                  style={{
+                                    color:
+                                      formData.chatApp === app
+                                        ? bgColor
+                                        : uiColor,
+                                    backgroundColor:
+                                      formData.chatApp === app
+                                        ? uiColor
+                                        : "transparent",
+                                    borderColor:
+                                      formData.chatApp === app
+                                        ? uiColor
+                                        : `${uiColor}44`,
+                                  }}
+                                >
+                                  {t(`form_app_${app}`)}
+                                </button>
+                              ),
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                  <AnimatePresence>
-                    {formData.channel === "chat" && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden mb-6 pl-6 border-l ml-1.5"
-                        style={{ borderColor: `${uiColor}33` }}
-                      >
-                        <p className="text-[9px] mb-2 opacity-60 tracking-tighter">
-                          {t("form_select_app")}
-                        </p>
-                        <div className="flex flex-wrap gap-3">
-                          {["whatsapp", "signal", "telegram", "sms"].map(
-                            (app) => (
-                              <Choice
-                                key={app}
-                                label={t(`form_app_${app}`)}
-                                selected={formData.chatApp === app}
-                                onClick={() => update("chatApp", app)}
-                              />
-                            ),
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                   <textarea
-                    placeholder={t("form_details")}
-                    className="w-full border bg-transparent p-4 text-sm h-32 outline-none resize-none placeholder:opacity-40 mt-4 cursor-text"
-                    style={{ borderColor: uiColor, color: uiColor }}
+                    placeholder={`${t("form_details")} (${t("optional")})`}
+                    className="w-full border bg-transparent p-4 text-sm h-32 outline-none resize-none placeholder:opacity-30"
+                    style={{ borderColor: `${uiColor}44`, color: uiColor }}
                     onChange={(e) => update("details", e.target.value)}
                     value={formData.details}
                   />
@@ -406,16 +437,30 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
         </AnimatePresence>
       </div>
 
-      <div
+      <footer
         className="mt-8 pt-6 border-t"
-        style={{ borderColor: `${uiColor}33` }}
+        style={{ borderColor: `${uiColor}22` }}
       >
-        <div className="flex justify-between items-center h-12">
+        <AnimatePresence>
+          {showError && (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mb-4"
+            >
+              <p className="text-[9px] font-bold tracking-[0.2em] text-red-500 uppercase">
+                ! {t("form_error_required")}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="flex justify-between items-center">
           {!wantsCall && step > 1 ? (
             <button
               onClick={() => setStep(step - 1)}
-              className="text-[10px] font-bold tracking-widest opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-              style={{ color: uiColor }}
+              className="text-[10px] font-bold tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
             >
               {t("button_back")}
             </button>
@@ -427,21 +472,21 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
             onClick={() =>
               wantsCall || step === 5 ? handleSubmit() : setStep(step + 1)
             }
-            className="px-4 py-3 text-[10px] font-bold tracking-[0.2em] transition-all duration-300 cursor-pointer"
-            style={{ backgroundColor: "transparent", color: uiColor }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = textColor;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = uiColor;
+            className="group flex items-center gap-4 py-4 text-[10px] font-bold tracking-[0.3em] transition-all cursor-pointer"
+            style={{
+              color: uiColor,
+              opacity: (wantsCall || step === 5) && !canSubmit ? 0.3 : 1,
             }}
           >
-            {wantsCall || step === 5
-              ? t("form_submit")
-              : `${t("button_next")} →`}
+            {wantsCall || step === 5 ? t("form_submit") : t("button_next")}
+            {!wantsCall && step < 5 && (
+              <span className="group-hover:translate-x-1 transition-transform">
+                →
+              </span>
+            )}
           </button>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };

@@ -13,7 +13,7 @@ const themes = [
     bg: "#fce0e8",
     text: "#c61e3d",
     level3: "#232c2d",
-    accent: "rgba(89, 114, 205, 0.1)", // #5972cd 10% opacity
+    accent: "rgba(89, 114, 205, 0.1)",
   },
   {
     name: "industrial",
@@ -90,7 +90,8 @@ const MainUIContent = React.memo(
     onThemeMouseDown,
     onHover,
   }) => {
-    const isWebExpanded = openSections.includes("web");
+    // Check if the specific form sub-id is open
+    const isWebExpanded = openSections.includes("web-inquiry");
 
     const sectionsData = [
       {
@@ -207,7 +208,7 @@ const MainUIContent = React.memo(
         {/* desktop-only inquiry form panel */}
         <div className="hidden md:flex fixed inset-y-0 right-0 w-[66.6vw] pointer-events-none items-center justify-center z-40">
           <AnimatePresence>
-            {isWebExpanded && (
+            {openSections.includes("web") && (
               <motion.div
                 className="relative flex items-center justify-center h-full"
                 style={{ width: "30vw" }}
@@ -215,13 +216,10 @@ const MainUIContent = React.memo(
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                {/* The Accent Rectangle - Full height background pillar */}
                 <div
                   className="absolute inset-y-0 inset-x-0 z-[-1] transition-colors duration-700"
                   style={{ backgroundColor: theme.accent }}
                 />
-
-                {/* The Form - Now allowed to take up more space and centered vertically */}
                 <motion.div
                   className="pointer-events-auto w-full max-h-screen overflow-y-auto no-scrollbar py-20 flex justify-center"
                   initial={{ opacity: 0, y: 20 }}
@@ -243,17 +241,31 @@ const MainUIContent = React.memo(
           </AnimatePresence>
         </div>
 
-        <ThemeControls
-          themes={themes}
-          themeIndex={themeIndex}
-          hoveredTheme={hoveredTheme}
-          isExpanding={isExpanding}
-          onThemeMouseDown={onThemeMouseDown}
-          onHover={onHover}
-          textColor={textColor}
-          currentThemeName={theme.name}
-          tagline={t("tagline")}
-        />
+        {/* ThemeControls Wrap: Hides on mobile when form is expanded */}
+        <div className="block md:block">
+          <AnimatePresence>
+            {!isWebExpanded && (
+              <motion.div
+                initial={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="md:!opacity-100 md:!transform-none" // Force visible on desktop
+              >
+                <ThemeControls
+                  themes={themes}
+                  themeIndex={themeIndex}
+                  hoveredTheme={hoveredTheme}
+                  isExpanding={isExpanding}
+                  onThemeMouseDown={onThemeMouseDown}
+                  onHover={onHover}
+                  textColor={textColor}
+                  currentThemeName={theme.name}
+                  tagline={t("tagline")}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     );
   },
@@ -324,14 +336,9 @@ function App() {
     };
   }, [isDragging, hoveredTheme, finalizeTheme, updateCursor]);
 
-  const handleLevel1Toggle = useCallback((id, subIds = []) => {
-    setOpenSections((prev) => {
-      if (prev.includes(id)) return [];
-      const auto =
-        subIds.length === 1 ? subIds : subIds.filter((s) => s.includes("tech"));
-      setTimeout(() => setOpenSections((p) => [...p, ...auto]), 300);
-      return [id];
-    });
+  // FIXED: Removed auto-expansion logic
+  const handleLevel1Toggle = useCallback((id) => {
+    setOpenSections((prev) => (prev.includes(id) ? [] : [id]));
   }, []);
 
   const VerticalText = ({ color }) => (

@@ -46,11 +46,11 @@ const NavSection = ({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={springConfig}
-            className="pl-12 md:pl-14 space-y-1 overflow-hidden"
+            // REMOVED pl-12 from here so children can use full width
+            className="space-y-1 overflow-hidden"
             style={{ color: textColor }}
           >
             {subItems.map((sub) => {
-              // hide the "inquiry form" link on desktop since it has its own floating panel
               if (
                 sub.type === "form" &&
                 typeof window !== "undefined" &&
@@ -60,9 +60,10 @@ const NavSection = ({
 
               return (
                 <div key={sub.id}>
+                  {/* Added pl-12 here to maintain the look for the labels */}
                   <button
                     onClick={() => onToggleSub(sub.id, id)}
-                    className="flex items-center gap-2 text-base font-bold outline-none cursor-pointer hover:opacity-70 hover:translate-x-1 transition-all duration-300 group/sub"
+                    className="flex items-center gap-2 text-base font-bold outline-none cursor-pointer hover:opacity-70 hover:translate-x-1 transition-all duration-300 group/sub pl-12 md:pl-14"
                   >
                     <span
                       className={`w-4 inline-flex justify-center transition-transform duration-500 ${!openSections.includes(sub.id) ? "group-hover/sub:rotate-90" : ""}`}
@@ -81,7 +82,7 @@ const NavSection = ({
                         className="overflow-hidden"
                       >
                         {sub.type === "list" ? (
-                          <ul className="mt-2 mb-4 space-y-3 pl-6 md:pl-8">
+                          <ul className="mt-2 mb-4 space-y-3 pl-[4.5rem] md:pl-[5rem]">
                             {sub.items.map((i, idx) => (
                               <li
                                 key={i}
@@ -98,7 +99,10 @@ const NavSection = ({
                             ))}
                           </ul>
                         ) : sub.type === "form" ? (
-                          <div className="w-full flex justify-center py-8 px-4 md:px-0 md:justify-start md:pl-8">
+                          /* The form now has a clean slate. 
+                             w-full + justify-center centers it on the whole screen.
+                          */
+                          <div className="w-full flex justify-center md:justify-start md:pl-20 py-6 px-6">
                             <div className="w-full max-w-md">
                               <WebInquiryForm
                                 textColor={textColor}
@@ -110,7 +114,7 @@ const NavSection = ({
                           </div>
                         ) : (
                           <div
-                            className="pl-6 md:pl-8 py-2 text-xs max-w-md lowercase leading-relaxed"
+                            className="pl-[4.5rem] md:pl-[5rem] py-2 text-xs max-w-md lowercase leading-relaxed"
                             style={{ color: theme.level3 }}
                           >
                             {sub.contentIsLink ? (
