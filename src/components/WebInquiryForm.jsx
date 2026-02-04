@@ -31,26 +31,11 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
     update("features", next);
   };
 
-  const PillButton = ({ label, selected, onClick }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className="px-4 py-2 border text-[10px] font-bold transition-all duration-200 lowercase"
-      style={{
-        borderColor: uiColor,
-        backgroundColor: selected ? uiColor : "transparent",
-        color: selected ? theme.bg : uiColor,
-      }}
-    >
-      {label}
-    </button>
-  );
-
   const Choice = ({ label, selected, onClick, isCheck = false }) => (
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-3 py-1.5 text-xs text-left transition-all group lowercase"
+      className="flex items-center gap-3 py-1.5 text-xs text-left transition-all group cursor-pointer"
       style={{ color: uiColor }}
     >
       <div
@@ -69,7 +54,7 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
   };
 
   return (
-    <div className="h-full flex flex-col lowercase" style={{ color: uiColor }}>
+    <div className="h-full flex flex-col" style={{ color: uiColor }}>
       {!hideHeading && (
         <header className="mb-6">
           <h2
@@ -84,7 +69,6 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
         </header>
       )}
 
-      {/* Progress / Fast-Track Selection */}
       <div className="mb-8">
         {!wantsCall && (
           <div className="flex gap-2 mb-6">
@@ -128,23 +112,29 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
             >
               <div className="space-y-8">
                 <div>
-                  <p className="text-[10px] mb-3 opacity-70 italic">
+                  <h3
+                    className="text-[11px] font-bold tracking-widest mb-3"
+                    style={{ color: textColor }}
+                  >
                     {t("form_phone_label")}
-                  </p>
+                  </h3>
                   <input
                     placeholder="+41..."
-                    className="w-full border-b bg-transparent py-2 text-sm outline-none placeholder:opacity-40"
+                    className="w-full border-b bg-transparent py-2 text-sm outline-none placeholder:opacity-40 cursor-text"
                     style={{ borderColor: uiColor, color: uiColor }}
                     onChange={(e) => update("contact", e.target.value)}
                     value={formData.contact}
                   />
                 </div>
                 <div>
-                  <p className="text-[10px] mb-3 opacity-70 italic">
+                  <h3
+                    className="text-[11px] font-bold tracking-widest mb-3"
+                    style={{ color: textColor }}
+                  >
                     {t("form_message_label")}
-                  </p>
+                  </h3>
                   <textarea
-                    className="w-full border bg-transparent p-4 text-sm h-32 outline-none resize-none placeholder:opacity-40"
+                    className="w-full border bg-transparent p-4 text-sm h-32 outline-none resize-none placeholder:opacity-40 cursor-text"
                     style={{ borderColor: uiColor, color: uiColor }}
                     onChange={(e) => update("details", e.target.value)}
                     value={formData.details}
@@ -161,30 +151,36 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                 >
-                  <h3
-                    className="text-[11px] font-bold tracking-widest mb-6"
-                    style={{ color: textColor }}
-                  >
-                    {t("section_1")}
-                  </h3>
-                  <div className="space-y-6">
-                    <div className="flex flex-col gap-1">
-                      {["new", "redesign", "landing"].map((type) => (
-                        <Choice
-                          key={type}
-                          label={t(`form_scope_${type}`)}
-                          selected={formData.type === type}
-                          onClick={() => update("type", type)}
-                        />
-                      ))}
-                    </div>
+                  <div className="space-y-8">
                     <div>
-                      <p className="text-[10px] mb-3 opacity-70 italic">
+                      <h3
+                        className="text-[11px] font-bold tracking-widest mb-6"
+                        style={{ color: textColor }}
+                      >
+                        {t("section_1")}
+                      </h3>
+                      <div className="flex flex-col gap-1">
+                        {["new", "redesign", "landing"].map((type) => (
+                          <Choice
+                            key={type}
+                            label={t(`form_scope_${type}`)}
+                            selected={formData.type === type}
+                            onClick={() => update("type", type)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3
+                        className="text-[11px] font-bold tracking-widest mb-3"
+                        style={{ color: textColor }}
+                      >
                         {t("form_pages_label")}
-                      </p>
-                      <div className="flex gap-2">
+                      </h3>
+                      <div className="flex flex-col gap-1">
                         {["1-5", "5-10", "10+"].map((p) => (
-                          <PillButton
+                          <Choice
                             key={p}
                             label={p}
                             selected={formData.pages === p}
@@ -193,9 +189,10 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
                         ))}
                       </div>
                     </div>
+
                     <input
                       placeholder={t("form_deadline")}
-                      className="w-full border-b bg-transparent py-2 text-sm outline-none placeholder:opacity-40"
+                      className="w-full border-b bg-transparent py-2 text-sm outline-none placeholder:opacity-40 cursor-text"
                       style={{ borderColor: uiColor, color: uiColor }}
                       onChange={(e) => update("deadline", e.target.value)}
                       value={formData.deadline}
@@ -252,7 +249,7 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
                   >
                     {t("section_3")}
                   </h3>
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     <div className="flex flex-col gap-1">
                       <Choice
                         label={t("form_assets_ready")}
@@ -279,7 +276,7 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
                     </div>
                     <input
                       placeholder={t("form_style_label")}
-                      className="w-full border-b bg-transparent py-2 text-sm outline-none placeholder:opacity-40"
+                      className="w-full border-b bg-transparent py-2 text-sm outline-none placeholder:opacity-40 cursor-text"
                       style={{ borderColor: uiColor, color: uiColor }}
                       onChange={(e) => update("style", e.target.value)}
                       value={formData.style}
@@ -295,32 +292,37 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                 >
-                  <h3
-                    className="text-[11px] font-bold tracking-widest mb-6"
-                    style={{ color: textColor }}
-                  >
-                    {t("section_4")}
-                  </h3>
-                  <div className="space-y-6">
-                    <div className="flex flex-col gap-1">
-                      <Choice
-                        label={t("form_host_free")}
-                        selected={formData.hosting === "github"}
-                        onClick={() => update("hosting", "github")}
-                      />
-                      <Choice
-                        label={t("form_host_ext")}
-                        selected={formData.hosting === "external"}
-                        onClick={() => update("hosting", "external")}
-                      />
+                  <div className="space-y-8">
+                    <div>
+                      <h3
+                        className="text-[11px] font-bold tracking-widest mb-6"
+                        style={{ color: textColor }}
+                      >
+                        {t("section_4")}
+                      </h3>
+                      <div className="flex flex-col gap-1">
+                        <Choice
+                          label={t("form_host_free")}
+                          selected={formData.hosting === "github"}
+                          onClick={() => update("hosting", "github")}
+                        />
+                        <Choice
+                          label={t("form_host_ext")}
+                          selected={formData.hosting === "external"}
+                          onClick={() => update("hosting", "external")}
+                        />
+                      </div>
                     </div>
                     <div>
-                      <p className="text-[10px] mb-3 opacity-70 italic">
+                      <h3
+                        className="text-[11px] font-bold tracking-widest mb-3"
+                        style={{ color: textColor }}
+                      >
                         {t("form_budget_label")}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
+                      </h3>
+                      <div className="flex flex-col gap-1">
                         {["low", "mid", "high"].map((b) => (
-                          <PillButton
+                          <Choice
                             key={b}
                             label={t(`budget_${b}`)}
                             selected={formData.budget === b}
@@ -348,12 +350,11 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
                   </h3>
                   <input
                     placeholder={t("form_contact_placeholder")}
-                    className="w-full border-b bg-transparent py-3 text-sm outline-none placeholder:opacity-40 mb-6"
+                    className="w-full border-b bg-transparent py-3 text-sm outline-none placeholder:opacity-40 mb-6 cursor-text"
                     style={{ borderColor: uiColor, color: uiColor }}
                     onChange={(e) => update("contact", e.target.value)}
                     value={formData.contact}
                   />
-
                   <div className="flex flex-wrap gap-4 mb-2">
                     {["chat", "email", "call"].map((c) => (
                       <Choice
@@ -364,7 +365,6 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
                       />
                     ))}
                   </div>
-
                   <AnimatePresence>
                     {formData.channel === "chat" && (
                       <motion.div
@@ -374,7 +374,7 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
                         className="overflow-hidden mb-6 pl-6 border-l ml-1.5"
                         style={{ borderColor: `${uiColor}33` }}
                       >
-                        <p className="text-[9px] mb-2 opacity-60 lowercase tracking-tighter">
+                        <p className="text-[9px] mb-2 opacity-60 tracking-tighter">
                           {t("form_select_app")}
                         </p>
                         <div className="flex flex-wrap gap-3">
@@ -392,10 +392,9 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
                       </motion.div>
                     )}
                   </AnimatePresence>
-
                   <textarea
                     placeholder={t("form_details")}
-                    className="w-full border bg-transparent p-4 text-sm h-32 outline-none resize-none placeholder:opacity-40 mt-4"
+                    className="w-full border bg-transparent p-4 text-sm h-32 outline-none resize-none placeholder:opacity-40 mt-4 cursor-text"
                     style={{ borderColor: uiColor, color: uiColor }}
                     onChange={(e) => update("details", e.target.value)}
                     value={formData.details}
@@ -415,7 +414,7 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
           {!wantsCall && step > 1 ? (
             <button
               onClick={() => setStep(step - 1)}
-              className="text-[10px] font-bold tracking-widest lowercase opacity-50 hover:opacity-100 transition-opacity"
+              className="text-[10px] font-bold tracking-widest opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
               style={{ color: uiColor }}
             >
               {t("button_back")}
@@ -428,18 +427,12 @@ const WebInquiryForm = ({ textColor, t, theme, hideHeading = false }) => {
             onClick={() =>
               wantsCall || step === 5 ? handleSubmit() : setStep(step + 1)
             }
-            className="px-8 py-3 border text-[10px] font-bold tracking-[0.2em] transition-all duration-300"
-            style={{
-              backgroundColor: "transparent",
-              borderColor: uiColor,
-              color: uiColor,
-            }}
+            className="px-4 py-3 text-[10px] font-bold tracking-[0.2em] transition-all duration-300 cursor-pointer"
+            style={{ backgroundColor: "transparent", color: uiColor }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = uiColor;
-              e.currentTarget.style.color = theme.bg;
+              e.currentTarget.style.color = textColor;
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
               e.currentTarget.style.color = uiColor;
             }}
           >

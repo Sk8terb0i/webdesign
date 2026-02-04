@@ -210,32 +210,33 @@ const MainUIContent = React.memo(
             {isWebExpanded && (
               <motion.div
                 className="relative flex items-center justify-center h-full"
-                style={{ width: "30vw" }} // The background width constraint
+                style={{ width: "30vw" }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                {/* The Accent Rectangle - Absolute within the 30vw container */}
+                {/* The Accent Rectangle - Full height background pillar */}
                 <div
                   className="absolute inset-y-0 inset-x-0 z-[-1] transition-colors duration-700"
                   style={{ backgroundColor: theme.accent }}
                 />
 
-                {/* The Form - Centered inside the 30vw container */}
+                {/* The Form - Now allowed to take up more space and centered vertically */}
                 <motion.div
-                  className="pointer-events-auto max-h-[75vh]"
-                  style={{ width: "25vw" }} // Original form width
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.4, ease: "circOut" }}
+                  className="pointer-events-auto w-full max-h-screen overflow-y-auto no-scrollbar py-20 flex justify-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.5, ease: "circOut" }}
                 >
-                  <WebInquiryForm
-                    textColor={textColor}
-                    t={t}
-                    theme={theme}
-                    hideHeading={false}
-                  />
+                  <div style={{ width: "25vw" }}>
+                    <WebInquiryForm
+                      textColor={textColor}
+                      t={t}
+                      theme={theme}
+                      hideHeading={false}
+                    />
+                  </div>
                 </motion.div>
               </motion.div>
             )}

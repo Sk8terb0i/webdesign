@@ -91,7 +91,7 @@ const NavSection = ({
                                 <span className="font-mono text-[10px] mt-[3.5px] opacity-25">
                                   {(idx + 1).toString().padStart(2, "0")}
                                 </span>
-                                <span className="leading-relaxed lowercase">
+                                <span className="leading-relaxed">
                                   {t(`${sub.translationPrefix}${i}`)}
                                 </span>
                               </li>
