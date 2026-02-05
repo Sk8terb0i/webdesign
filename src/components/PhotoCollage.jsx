@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
 // Import images
@@ -14,6 +14,7 @@ const PhotoCollage = ({ theme }) => {
   const [orderedImages, setOrderedImages] = useState([]);
   const [topZ, setTopZ] = useState(imageAssets.length);
   const [isMobile, setIsMobile] = useState(false);
+  const constraintsRef = useRef(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -45,8 +46,10 @@ const PhotoCollage = ({ theme }) => {
   };
 
   return (
-    /* Removed overflow-hidden so images aren't cut off when dragged/tilted */
-    <div className="relative w-full h-full flex items-center justify-center pointer-events-auto">
+    <div
+      ref={constraintsRef}
+      className="relative w-full h-full flex items-center justify-center pointer-events-auto overflow-visible"
+    >
       {orderedImages.map((img, index) => (
         <PhotoItem
           key={img.id}
@@ -65,14 +68,17 @@ const PhotoCollage = ({ theme }) => {
 const PhotoItem = ({ src, index, zIndex, onPointerDown, theme, isMobile }) => {
   const [isActive, setIsActive] = useState(false);
 
+  // Your updated limits
+  const limits = isMobile
+    ? { x: 25, y: 50 } // Tight X, Loose Y for mobile
+    : { x: 300, y: 250 }; // Moderate X, Tight Y for desktop
+
+  // Restored original starting spread
   const spreadX = isMobile ? 75 : 150;
   const spreadY = isMobile ? 60 : 120;
 
-  const dragLimitX = isMobile ? 20 : 350;
-  const dragLimitY = isMobile ? 30 : 300;
-
-  const [initial] = useState({
-    rotate: Math.random() * 6 - 3,
+  const [initialPos] = useState({
+    rotate: Math.random() * 10 - 5,
     x: Math.random() * (spreadX * 2) - spreadX,
     y: Math.random() * (spreadY * 2) - spreadY,
     dragRotate: Math.random() * 14 - 7,
@@ -88,39 +94,42 @@ const PhotoItem = ({ src, index, zIndex, onPointerDown, theme, isMobile }) => {
       onPointerCancel={() => setIsActive(false)}
       drag
       dragConstraints={{
-        left: -dragLimitX,
-        right: dragLimitX,
-        top: -dragLimitY,
-        bottom: dragLimitY,
+        left: -limits.x,
+        right: limits.x,
+        top: -limits.y,
+        bottom: limits.y,
       }}
-      dragElastic={isMobile ? 0.4 : 0.1}
-      whileTap={{ scale: 1.01, cursor: "grabbing" }}
-      initial={{ opacity: 0, scale: 0.9, rotate: 0, x: 0, y: 0 }}
+      dragElastic={0.1}
+      dragMomentum={false}
+      whileTap={{ scale: 1.02, cursor: "grabbing" }}
+      initial={{
+        opacity: 0,
+        scale: 0.8,
+        rotate: initialPos.rotate,
+        x: initialPos.x,
+        y: initialPos.y,
+      }}
       animate={{
         opacity: 1,
         scale: 1,
-        rotate: isActive ? initial.dragRotate : initial.rotate,
-        x: initial.x,
-        y: initial.y,
+        rotate: isActive ? initialPos.dragRotate : initialPos.rotate,
         transition: {
-          rotate: { type: "spring", stiffness: 200, damping: 15 },
-          default: {
-            delay: index * 0.08,
-            type: "spring",
-            stiffness: 70,
-            damping: 20,
-          },
+          rotate: { type: "spring", stiffness: 200, damping: 20 },
+          opacity: { delay: index * 0.1 },
+          scale: { delay: index * 0.1, type: "spring", stiffness: 100 },
         },
       }}
       style={{
         zIndex,
         position: "absolute",
         cursor: "grab",
-        boxShadow: `0 4px 15px ${theme.text}15`,
-        border: `2px solid ${theme.text}`,
+        boxShadow: `0 10px 30px ${theme.text}25`,
+        border: `3px solid ${theme.text}`,
         lineHeight: 0,
+        width: isMobile ? "160px" : "320px",
+        willChange: "transform",
+        touchAction: "none",
       }}
-      className="w-40 md:w-80 transition-shadow duration-300"
     >
       <img
         src={src}
