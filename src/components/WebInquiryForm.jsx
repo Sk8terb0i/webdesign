@@ -27,26 +27,35 @@ const PRICING_CONFIG = {
   copy: [200, 600, 1000],
 };
 
-const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
+const WebInquiryForm = ({
+  t,
+  theme,
+  hideHeading = false,
+  onSuccess,
+  readOnlyData = null,
+}) => {
+  const safeTheme = theme || { bg: "#000", text: "#fff" };
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [showError, setShowError] = useState(false);
 
-  const [formData, setFormData] = useState({
-    type: "",
-    pages: "",
-    features: [],
-    extraLangs: 0,
-    needsTranslation: false,
-    assets: "",
-    copy: "",
-    hosting: "",
-    selectedTier: "",
-    contact: "",
-    channel: "",
-    messagingApp: "",
-    details: "",
-  });
+  const [formData, setFormData] = useState(
+    readOnlyData || {
+      type: "",
+      pages: "",
+      features: [],
+      extraLangs: 0,
+      needsTranslation: false,
+      assets: "",
+      copy: "",
+      hosting: "",
+      selectedTier: "",
+      contact: "",
+      channel: "",
+      messagingApp: "",
+      details: "",
+    },
+  );
 
   const isStepComplete = (stepNumber) => {
     switch (stepNumber) {
@@ -72,12 +81,15 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
     }
   };
 
-  // Automatically select "1" page when Landing Page is chosen
   useEffect(() => {
-    if (formData.type === "landing") {
+    if (readOnlyData) setFormData(readOnlyData);
+  }, [readOnlyData]);
+
+  useEffect(() => {
+    if (formData.type === "landing" && !readOnlyData) {
       setFormData((prev) => ({ ...prev, pages: "1-5" }));
     }
-  }, [formData.type]);
+  }, [formData.type, readOnlyData]);
 
   const calculatedTiers = useMemo(() => {
     if (!formData.type) return [0, 0, 0];
@@ -101,7 +113,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
         const perLangCost =
           PRICING_CONFIG.language.technical +
           (formData.needsTranslation ? PRICING_CONFIG.language.translation : 0);
-        total += formData.extraLangs * perLangCost;
+        total += (formData.extraLangs || 0) * perLangCost;
       }
       if (formData.assets === "need") total += PRICING_CONFIG.assets[idx];
       if (formData.copy === "need") total += PRICING_CONFIG.copy[idx];
@@ -110,12 +122,12 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
   }, [formData]);
 
   const update = (field, val) => {
+    if (readOnlyData) return;
     setShowError(false);
     setFormData((prev) => {
       const isDeselecting = prev[field] === val;
       const newValue = isDeselecting ? "" : val;
 
-      // Reset pages if landing is deselected
       if (field === "type" && val === "landing" && isDeselecting) {
         return { ...prev, [field]: "", pages: "" };
       }
@@ -125,6 +137,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
   };
 
   const handleNext = async () => {
+    if (readOnlyData) return;
     if (step === 6) {
       for (let i = 1; i <= 6; i++) {
         if (!isStepComplete(i)) {
@@ -160,6 +173,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
     disabled = false,
     isCheck = false,
   }) => {
+    const isViewOnly = !!readOnlyData;
     const supportsHover =
       typeof window !== "undefined" &&
       window.matchMedia("(hover: hover)").matches;
@@ -168,24 +182,25 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
       <motion.button
         type="button"
         whileHover={
-          supportsHover && !disabled && !selected
-            ? { backgroundColor: `${theme.bg}11` }
+          supportsHover && !disabled && !selected && !isViewOnly
+            ? { backgroundColor: `${safeTheme.bg}11` }
             : {}
         }
-        whileTap={!disabled ? { scale: 0.98 } : {}}
+        whileTap={!disabled && !isViewOnly ? { scale: 0.98 } : {}}
         transition={{ duration: 0.1 }}
         onClick={(e) => {
-          if (disabled) return;
+          if (disabled || isViewOnly) return;
           onClick();
           e.currentTarget.blur();
         }}
         className={`group flex flex-col w-full px-4 py-3 border mb-2 transition-all relative outline-none
-        ${disabled ? "cursor-not-allowed opacity-20" : "cursor-pointer"} 
+        ${disabled || isViewOnly ? "cursor-default opacity-100" : "cursor-pointer"} 
       `}
         style={{
-          color: selected ? theme.text : theme.bg,
-          borderColor: selected ? theme.bg : `${theme.bg}44`,
-          backgroundColor: selected ? theme.bg : "transparent",
+          color: selected ? safeTheme.text : safeTheme.bg,
+          borderColor: selected ? safeTheme.bg : `${safeTheme.bg}44`,
+          backgroundColor: selected ? safeTheme.bg : "transparent",
+          opacity: isViewOnly && !selected ? 0.3 : 1,
         }}
       >
         <div className="flex items-center justify-between w-full relative z-10">
@@ -195,8 +210,8 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
           <div
             className={`w-1.5 h-1.5 transition-colors duration-200 ${isCheck ? "rotate-45" : "rounded-full"}`}
             style={{
-              backgroundColor: selected ? theme.text : "transparent",
-              border: `1px solid ${selected ? theme.text : theme.bg}`,
+              backgroundColor: selected ? safeTheme.text : "transparent",
+              border: `1px solid ${selected ? safeTheme.text : safeTheme.bg}`,
             }}
           />
         </div>
@@ -210,7 +225,10 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
   };
 
   return (
-    <div className="w-full flex flex-col font-sans" style={{ color: theme.bg }}>
+    <div
+      className="w-full flex flex-col font-sans"
+      style={{ color: safeTheme.bg }}
+    >
       <AnimatePresence mode="wait">
         {submitted ? (
           <motion.div
@@ -254,7 +272,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                     }}
                     className="h-1 flex-grow transition-all duration-300 cursor-pointer border-none p-0 relative group"
                     style={{
-                      backgroundColor: theme.bg,
+                      backgroundColor: safeTheme.bg,
                       opacity: step === s ? 1 : 0.15,
                     }}
                   >
@@ -286,7 +304,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                     {formData.type === "landing" && (
                       <p
                         className="text-[9px] mt-2 opacity-70 leading-relaxed italic border-l-2 pl-3"
-                        style={{ borderColor: theme.bg }}
+                        style={{ borderColor: safeTheme.bg }}
                       >
                         {t("form_scope_landing_note")}
                       </p>
@@ -327,7 +345,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                         key={f}
                         isCheck
                         label={t(`form_feat_${f}`)}
-                        selected={formData.features.includes(f)}
+                        selected={formData.features?.includes(f)}
                         onClick={() => {
                           const next = formData.features.includes(f)
                             ? formData.features.filter((x) => x !== f)
@@ -338,13 +356,13 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                     ))}
                     <div
                       className="mt-4 border-t pt-4"
-                      style={{ borderColor: `${theme.bg}22` }}
+                      style={{ borderColor: `${safeTheme.bg}22` }}
                     >
                       <Choice
                         isCheck
                         label={t("form_feat_lang")}
                         sublabel={t("form_feat_lang_desc")}
-                        selected={formData.features.includes("lang")}
+                        selected={formData.features?.includes("lang")}
                         onClick={() => {
                           const next = formData.features.includes("lang")
                             ? formData.features.filter((x) => x !== "lang")
@@ -352,11 +370,13 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                           update("features", next);
                         }}
                       />
-                      {formData.features.includes("lang") && (
+                      {formData.features?.includes("lang") && (
                         <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          className="pl-4 space-y-4 mt-4"
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="pl-4 space-y-4 mt-4 overflow-hidden"
                         >
                           <div>
                             <p className="text-[9px] tracking-widest mb-2 opacity-60">
@@ -366,21 +386,27 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                               {[1, 2, 3].map((num) => (
                                 <button
                                   key={num}
+                                  type="button" // Always specify type for buttons inside forms
                                   onClick={() => update("extraLangs", num)}
-                                  className="px-4 py-2 border text-[10px] cursor-pointer"
+                                  className={`px-4 py-2 border text-[10px] transition-colors ${readOnlyData ? "cursor-default" : "cursor-pointer"}`}
                                   style={{
                                     borderColor:
                                       formData.extraLangs === num
-                                        ? theme.bg
-                                        : `${theme.bg}44`,
+                                        ? safeTheme.bg
+                                        : `${safeTheme.bg}44`,
                                     backgroundColor:
                                       formData.extraLangs === num
-                                        ? theme.bg
+                                        ? safeTheme.bg
                                         : "transparent",
                                     color:
                                       formData.extraLangs === num
-                                        ? theme.text
-                                        : theme.bg,
+                                        ? safeTheme.text
+                                        : safeTheme.bg,
+                                    opacity:
+                                      readOnlyData &&
+                                      formData.extraLangs !== num
+                                        ? 0.3
+                                        : 1,
                                   }}
                                 >
                                   +{num}
@@ -388,6 +414,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                               ))}
                             </div>
                           </div>
+
                           <div>
                             <p className="text-[9px] tracking-widest mb-2 opacity-60">
                               {t("form_lang_service")}
@@ -484,8 +511,8 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                         <motion.button
                           key={tier}
                           whileHover={
-                            formData.selectedTier !== tier
-                              ? { backgroundColor: `${theme.bg}11`, x: 4 }
+                            formData.selectedTier !== tier && !readOnlyData
+                              ? { backgroundColor: `${safeTheme.bg}11`, x: 4 }
                               : {}
                           }
                           transition={{ duration: 0.1 }}
@@ -493,24 +520,28 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                             update("selectedTier", tier);
                             e.currentTarget.blur();
                           }}
-                          className="w-full p-5 border text-left transition-all relative outline-none cursor-pointer"
+                          className={`w-full p-5 border text-left transition-all relative outline-none ${readOnlyData ? "cursor-default" : "cursor-pointer"}`}
                           style={{
                             borderWidth: tier === "premium" ? "1.5px" : "1px",
                             borderColor:
                               formData.selectedTier === tier
-                                ? theme.bg
+                                ? safeTheme.bg
                                 : tier === "premium"
-                                  ? `${theme.bg}88`
-                                  : `${theme.bg}33`,
+                                  ? `${safeTheme.bg}88`
+                                  : `${safeTheme.bg}33`,
                             backgroundColor:
                               formData.selectedTier === tier
-                                ? theme.bg
+                                ? safeTheme.bg
                                 : "transparent",
                             color:
                               formData.selectedTier === tier
-                                ? theme.text
-                                : theme.bg,
+                                ? safeTheme.text
+                                : safeTheme.bg,
                             zIndex: tier === "premium" ? 10 : 1,
+                            opacity:
+                              readOnlyData && formData.selectedTier !== tier
+                                ? 0.3
+                                : 1,
                           }}
                         >
                           <div className="flex justify-between items-end">
@@ -547,9 +578,11 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                       {t("get_in_touch_out")}
                     </h3>
                     <input
+                      readOnly={!!readOnlyData}
+                      value={formData.contact}
                       placeholder={t("form_contact_placeholder")}
                       className="w-full border-b bg-transparent py-4 text-lg outline-none mb-6"
-                      style={{ borderColor: theme.bg }}
+                      style={{ borderColor: safeTheme.bg }}
                       onChange={(e) => update("contact", e.target.value)}
                     />
                     <div className="space-y-2 mb-4">
@@ -569,7 +602,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           className="pt-2 border-t"
-                          style={{ borderColor: `${theme.bg}22` }}
+                          style={{ borderColor: `${safeTheme.bg}22` }}
                         >
                           <p className="text-[9px] tracking-widest mb-3 opacity-60 mt-2">
                             Preferred messaging app:
@@ -596,70 +629,92 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
 
             <footer
               className="mt-8 pt-6 border-t flex justify-between items-center relative"
-              style={{ borderColor: `${theme.bg}22` }}
+              style={{ borderColor: `${safeTheme.bg}22` }}
             >
               {showError && (
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="absolute -top-4 left-0 text-[8px] font-bold tracking-widest"
-                  style={{ color: theme.bg }}
+                  style={{ color: safeTheme.bg }}
                 >
                   {t("form_error_required")}
                 </motion.p>
               )}
-              {step > 1 ? (
-                <button
-                  onClick={() => {
-                    setShowError(false);
-                    setStep(step - 1);
-                  }}
-                  className="group flex items-center cursor-pointer p-2 -ml-2 transition-transform active:scale-95 outline-none"
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={theme.bg}
-                    strokeWidth="1.5"
+              {!readOnlyData ? (
+                <>
+                  {step > 1 ? (
+                    <button
+                      onClick={() => {
+                        setShowError(false);
+                        setStep(step - 1);
+                      }}
+                      className="group flex items-center cursor-pointer p-2 -ml-2 transition-transform active:scale-95 outline-none"
+                    >
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke={safeTheme.bg}
+                        strokeWidth="1.5"
+                      >
+                        <path
+                          d="M19 12H5M5 12L12 19M5 12L12 5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  ) : (
+                    <div />
+                  )}
+                  <button
+                    onClick={handleNext}
+                    className="group flex items-center gap-3 cursor-pointer transition-all active:scale-95 outline-none"
                   >
-                    <path
-                      d="M19 12H5M5 12L12 19M5 12L12 5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
+                    {step === 6 && (
+                      <span className="text-[10px] tracking-[0.2em] opacity-100">
+                        {t("form_submit")}
+                      </span>
+                    )}
+                    <div className="p-2 -mr-2 transition-transform group-hover:translate-x-1">
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke={safeTheme.bg}
+                        strokeWidth="1.5"
+                      >
+                        <path
+                          d="M5 12H19M19 12L12 5M19 12L12 19"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                </>
               ) : (
-                <div />
-              )}
-              <button
-                onClick={handleNext}
-                className="group flex items-center gap-3 cursor-pointer transition-all active:scale-95 outline-none"
-              >
-                {step === 6 && (
-                  <span className="text-[10px] tracking-[0.2em] opacity-100">
-                    {t("form_submit")}
-                  </span>
-                )}
-                <div className="p-2 -mr-2 transition-transform group-hover:translate-x-1">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={theme.bg}
-                    strokeWidth="1.5"
-                  >
-                    <path
-                      d="M5 12H19M19 12L12 5M19 12L12 19"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar w-full">
+                  {[1, 2, 3, 4, 5, 6].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setStep(s)}
+                      className="text-[9px] px-3 py-1 border font-bold tracking-tighter"
+                      style={{
+                        backgroundColor:
+                          step === s ? safeTheme.bg : "transparent",
+                        color: step === s ? safeTheme.text : safeTheme.bg,
+                        borderColor: safeTheme.bg,
+                      }}
+                    >
+                      Step {s}
+                    </button>
+                  ))}
                 </div>
-              </button>
+              )}
             </footer>
           </motion.div>
         )}

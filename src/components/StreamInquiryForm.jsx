@@ -18,24 +18,32 @@ const STREAM_CONFIG = {
   editRate: 200,
 };
 
-const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
+const StreamInquiryForm = ({
+  t,
+  theme,
+  hideHeading = false,
+  onSuccess,
+  data = null,
+}) => {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [showError, setShowError] = useState(false);
 
   const [formData, setFormData] = useState({
-    days: 1,
-    cameras: 1,
-    type: "local",
-    platforms: 1,
-    recording: "none",
-    overlays: "none",
-    edits: 0,
-    contact: "",
-    channel: "",
-    messagingApp: "",
-    details: "",
+    days: data?.days || 1,
+    cameras: data?.cameras || 1,
+    type: data?.type || "local",
+    platforms: data?.platforms || 1,
+    recording: data?.recording || "none",
+    overlays: data?.overlays || "none",
+    edits: data?.edits || 0,
+    contact: data?.contact || "",
+    channel: data?.channel || "",
+    messagingApp: data?.messagingApp || "",
+    details: data?.details || "",
   });
+
+  const isAdmin = !!data;
 
   const isStepComplete = (stepNumber) => {
     switch (stepNumber) {
@@ -73,6 +81,7 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
   }, [formData]);
 
   const update = (field, val) => {
+    if (isAdmin) return;
     setShowError(false);
     setFormData((prev) => {
       // Only toggle (reset) if it's a selection field, NOT a text input
@@ -91,7 +100,13 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
   };
 
   const handleNext = async () => {
+    if (isAdmin && step < 4) {
+      setStep(step + 1);
+      return;
+    }
+
     if (step === 4) {
+      if (isAdmin) return;
       if (!isStepComplete(4)) {
         setShowError(true);
         return;
@@ -125,31 +140,34 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
       typeof window !== "undefined" &&
       window.matchMedia("(hover: hover)").matches;
 
+    const isInteractionDisabled = disabled || isAdmin;
+
     return (
       <motion.button
         type="button"
         // Only apply hover if supported AND not selected
         whileHover={
-          supportsHover && !disabled && !selected
+          supportsHover && !isInteractionDisabled && !selected
             ? { backgroundColor: `${theme.bg}11` }
             : {}
         }
         // Feedback for the actual click/tap
-        whileTap={!disabled ? { scale: 0.98 } : {}}
+        whileTap={!isInteractionDisabled ? { scale: 0.98 } : {}}
         transition={{ duration: 0.1 }}
         onClick={(e) => {
-          if (disabled) return;
+          if (isInteractionDisabled) return;
           onClick();
           // Blur the element so it doesn't keep "focus" styles/hover state
           e.currentTarget.blur();
         }}
         className={`group flex flex-col w-full px-4 py-3 border mb-2 transition-all relative outline-none
-        ${disabled ? "cursor-not-allowed opacity-20" : "cursor-pointer"} 
+        ${isInteractionDisabled ? "cursor-default" : "cursor-pointer"} 
       `}
         style={{
           color: selected ? theme.text : theme.bg,
           borderColor: selected ? theme.bg : `${theme.bg}44`,
           backgroundColor: selected ? theme.bg : "transparent",
+          opacity: isAdmin && !selected ? 0.3 : 1,
         }}
       >
         <div className="flex items-center justify-between w-full relative z-10">
@@ -194,10 +212,12 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
             {!hideHeading && (
               <header className="mb-8">
                 <h2 className="text-2xl font-bold tracking-tighter mb-2">
-                  {t("form_title_stream")}
+                  {isAdmin
+                    ? `INQUIRY: ${formData.contact}`
+                    : t("form_title_stream")}
                 </h2>
                 <p className="text-[10px] opacity-60 tracking-widest">
-                  {t("form_subtitle")}
+                  {isAdmin ? "Reviewing submitted data" : t("form_subtitle")}
                 </p>
               </header>
             )}
@@ -243,13 +263,14 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                           <button
                             key={n}
                             onClick={() => update("days", n)}
-                            className="px-5 py-2 border text-[10px]"
+                            className={`px-5 py-2 border text-[10px] ${isAdmin ? "cursor-default" : ""}`}
                             style={{
                               backgroundColor:
                                 formData.days === n ? theme.bg : "transparent",
                               color:
                                 formData.days === n ? theme.text : theme.bg,
                               borderColor: theme.bg,
+                              opacity: isAdmin && formData.days !== n ? 0.3 : 1,
                             }}
                           >
                             {n}
@@ -266,7 +287,7 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                           <button
                             key={n}
                             onClick={() => update("cameras", n)}
-                            className="flex-1 py-3 border text-[10px]"
+                            className={`flex-1 py-3 border text-[10px] ${isAdmin ? "cursor-default" : ""}`}
                             style={{
                               backgroundColor:
                                 formData.cameras === n
@@ -275,6 +296,8 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                               color:
                                 formData.cameras === n ? theme.text : theme.bg,
                               borderColor: theme.bg,
+                              opacity:
+                                isAdmin && formData.cameras !== n ? 0.3 : 1,
                             }}
                           >
                             {n}
@@ -341,7 +364,7 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                               <button
                                 key={n}
                                 onClick={() => update("platforms", n)}
-                                className="px-4 py-2 border text-[10px]"
+                                className={`px-4 py-2 border text-[10px] ${isAdmin ? "cursor-default" : ""}`}
                                 style={{
                                   backgroundColor:
                                     formData.platforms === n
@@ -352,6 +375,10 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                                       ? theme.text
                                       : theme.bg,
                                   borderColor: theme.bg,
+                                  opacity:
+                                    isAdmin && formData.platforms !== n
+                                      ? 0.3
+                                      : 1,
                                 }}
                               >
                                 {n}
@@ -424,8 +451,9 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                       {t("get_in_touch_out")}
                     </h3>
                     <input
+                      readOnly={isAdmin}
                       placeholder={t("form_contact_placeholder")}
-                      className="w-full border-b bg-transparent py-4 text-lg outline-none mb-6"
+                      className={`w-full border-b bg-transparent py-4 text-lg outline-none mb-6 ${isAdmin ? "cursor-default" : ""}`}
                       style={{ borderColor: theme.bg }}
                       value={formData.contact}
                       onChange={(e) => update("contact", e.target.value)}
@@ -516,9 +544,14 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                 onClick={handleNext}
                 className="group flex items-center gap-3 cursor-pointer transition-all active:scale-95"
               >
-                {step === 4 && (
+                {step === 4 && !isAdmin && (
                   <span className="text-[10px] tracking-[0.2em] opacity-100">
                     {t("form_submit")}
+                  </span>
+                )}
+                {step === 4 && isAdmin && (
+                  <span className="text-[10px] tracking-[0.2em] opacity-100">
+                    END
                   </span>
                 )}
                 <div className="p-2 -mr-2 transition-transform group-hover:translate-x-1">

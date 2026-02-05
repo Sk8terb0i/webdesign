@@ -3,19 +3,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { db } from "../firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
+const GeneralInquiryForm = ({ t, theme, onSuccess, data = null }) => {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [showError, setShowError] = useState(false);
 
   const [formData, setFormData] = useState({
-    message: "",
-    contact: "",
-    channel: "",
-    messagingApp: "",
+    message: data?.message || "",
+    contact: data?.contact || "",
+    channel: data?.channel || "",
+    messagingApp: data?.messagingApp || "",
   });
 
+  const isAdmin = !!data;
+
   const update = (field, val) => {
+    if (isAdmin) return;
     setShowError(false);
     setFormData((prev) => ({ ...prev, [field]: val }));
   };
@@ -29,6 +32,7 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
     }
 
     if (step === 2) {
+      if (isAdmin) return;
       const hasMessage = !!formData.message && formData.message.trim() !== "";
       const hasContact = !!formData.contact && !!formData.channel;
       const chatValid =
@@ -57,22 +61,28 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
     const supportsHover =
       typeof window !== "undefined" &&
       window.matchMedia("(hover: hover)").matches;
+
+    const isInteractionDisabled = isAdmin;
+
     return (
       <motion.button
         type="button"
         whileHover={
-          supportsHover && !selected ? { backgroundColor: `${theme.bg}11` } : {}
+          supportsHover && !selected && !isInteractionDisabled
+            ? { backgroundColor: `${theme.bg}11` }
+            : {}
         }
         onClick={(e) => {
+          if (isInteractionDisabled) return;
           onClick();
           e.currentTarget.blur();
         }}
-        // Added cursor-pointer here
-        className="group flex flex-col w-full px-4 py-3 border mb-2 transition-all outline-none cursor-pointer"
+        className={`group flex flex-col w-full px-4 py-3 border mb-2 transition-all outline-none ${isInteractionDisabled ? "cursor-default" : "cursor-pointer"}`}
         style={{
           color: selected ? theme.text : theme.bg,
           borderColor: selected ? theme.bg : `${theme.bg}44`,
           backgroundColor: selected ? theme.bg : "transparent",
+          opacity: isAdmin && !selected ? 0.3 : 1,
         }}
       >
         <div className="flex items-center justify-between w-full">
@@ -112,13 +122,14 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
           <motion.div key="form-container">
             <header className="mb-8">
               <h2 className="text-2xl font-bold tracking-tighter mb-2">
-                {t("contact_me")}
+                {isAdmin ? `INQUIRY: ${formData.contact}` : t("contact_me")}
               </h2>
               <div className="flex gap-1 mt-4">
                 {[1, 2].map((s) => (
                   <div
                     key={s}
-                    className="h-1 flex-grow"
+                    className="h-1 flex-grow cursor-pointer"
+                    onClick={() => setStep(s)}
                     style={{
                       backgroundColor: theme.bg,
                       opacity: step === s ? 1 : 0.15,
@@ -140,10 +151,10 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
                     <h3 className="text-sm font-bold tracking-tighter mb-6">
                       {t("message_label")}
                     </h3>
-                    {/* Added cursor-text (standard for inputs) */}
                     <textarea
+                      readOnly={isAdmin}
                       placeholder={t("message_placeholder")}
-                      className="w-full bg-transparent border-b py-4 text-sm outline-none resize-none min-h-[150px] cursor-text"
+                      className={`w-full bg-transparent border-b py-4 text-sm outline-none resize-none min-h-[150px] ${isAdmin ? "cursor-default" : "cursor-text"}`}
                       style={{
                         borderColor:
                           showError && !formData.message
@@ -165,8 +176,9 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
                       {t("get_in_touch")}
                     </h3>
                     <input
+                      readOnly={isAdmin}
                       placeholder={t("form_contact_placeholder")}
-                      className="w-full border-b bg-transparent py-4 text-lg outline-none mb-6 cursor-text"
+                      className={`w-full border-b bg-transparent py-4 text-lg outline-none mb-6 ${isAdmin ? "cursor-default" : "cursor-text"}`}
                       style={{
                         borderColor: theme.bg,
                       }}
@@ -204,17 +216,6 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
               className="mt-8 pt-6 border-t flex flex-col gap-4"
               style={{ borderColor: `${theme.bg}22` }}
             >
-              {showError && (
-                <motion.span
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm tracking-tight"
-                  style={{ color: theme.bg }}
-                >
-                  {t("form_error_required")}
-                </motion.span>
-              )}
-
               <div className="flex justify-between items-center w-full">
                 {step > 1 ? (
                   <button
@@ -247,8 +248,8 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
                   className="flex items-center gap-3 outline-none group cursor-pointer"
                 >
                   {step === 2 && (
-                    <span className="text-[10px] tracking-widest">
-                      {t("form_submit")}
+                    <span className="text-[10px] tracking-widest uppercase">
+                      {isAdmin ? "END" : t("form_submit")}
                     </span>
                   )}
                   <div className="p-2 transition-transform group-hover:translate-x-1">
