@@ -74,16 +74,20 @@ const StreamInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
 
   const update = (field, val) => {
     setShowError(false);
-    setFormData((prev) => ({
-      ...prev,
-      // If the value is already selected, reset to default/empty
-      [field]:
-        prev[field] === val
-          ? field === "days" || field === "cameras" || field === "platforms"
+    setFormData((prev) => {
+      // Only toggle (reset) if it's a selection field, NOT a text input
+      const isTextField = field === "contact" || field === "details";
+      const shouldToggle = !isTextField && prev[field] === val;
+
+      return {
+        ...prev,
+        [field]: shouldToggle
+          ? ["days", "cameras", "platforms"].includes(field)
             ? 1
             : ""
           : val,
-    }));
+      };
+    });
   };
 
   const handleNext = async () => {

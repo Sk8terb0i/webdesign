@@ -20,18 +20,21 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
     setFormData((prev) => ({ ...prev, [field]: val }));
   };
 
-  const handleNext = async () => {
-    if (step === 1 && !formData.message) {
-      setShowError(true);
+  const handleNext = async (e) => {
+    if (e) e.preventDefault();
+
+    if (step === 1) {
+      setStep(2);
       return;
     }
 
     if (step === 2) {
+      const hasMessage = !!formData.message && formData.message.trim() !== "";
       const hasContact = !!formData.contact && !!formData.channel;
       const chatValid =
         formData.channel === "chat" ? !!formData.messagingApp : true;
 
-      if (!hasContact || !chatValid) {
+      if (!hasMessage || !hasContact || !chatValid) {
         setShowError(true);
         return;
       }
@@ -47,8 +50,6 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
       } catch (error) {
         console.error("Error:", error);
       }
-    } else {
-      setStep(step + 1);
     }
   };
 
@@ -58,6 +59,7 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
       window.matchMedia("(hover: hover)").matches;
     return (
       <motion.button
+        type="button"
         whileHover={
           supportsHover && !selected ? { backgroundColor: `${theme.bg}11` } : {}
         }
@@ -65,7 +67,8 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
           onClick();
           e.currentTarget.blur();
         }}
-        className="group flex flex-col w-full px-4 py-3 border mb-2 transition-all outline-none"
+        // Added cursor-pointer here
+        className="group flex flex-col w-full px-4 py-3 border mb-2 transition-all outline-none cursor-pointer"
         style={{
           color: selected ? theme.text : theme.bg,
           borderColor: selected ? theme.bg : `${theme.bg}44`,
@@ -106,7 +109,7 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
             </p>
           </motion.div>
         ) : (
-          <motion.div key="form">
+          <motion.div key="form-container">
             <header className="mb-8">
               <h2 className="text-2xl font-bold tracking-tighter mb-2">
                 {t("contact_me")}
@@ -126,110 +129,146 @@ const GeneralInquiryForm = ({ t, theme, onSuccess }) => {
             </header>
 
             <div className="min-h-[350px]">
-              {step === 1 ? (
-                <motion.section
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-sm font-bold tracking-tighter mb-6">
-                    {t("message_label")}
-                  </h3>
-                  <textarea
-                    placeholder={t("message_placeholder")}
-                    className="w-full bg-transparent border-b py-4 text-sm outline-none resize-none min-h-[150px]"
-                    style={{ borderColor: `${theme.bg}44` }}
-                    value={formData.message}
-                    onChange={(e) => update("message", e.target.value)}
-                  />
-                </motion.section>
-              ) : (
-                <motion.section
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-sm font-bold tracking-tighter mb-6">
-                    {t("get_in_touch")}
-                  </h3>
-                  <input
-                    placeholder={t("form_contact_placeholder")}
-                    className="w-full border-b bg-transparent py-4 text-lg outline-none mb-6"
-                    style={{ borderColor: theme.bg }}
-                    value={formData.contact}
-                    onChange={(e) => update("contact", e.target.value)}
-                  />
-                  {["email", "call", "chat"].map((ch) => (
-                    <Choice
-                      key={ch}
-                      label={t(`form_channel_${ch}`)}
-                      selected={formData.channel === ch}
-                      onClick={() => update("channel", ch)}
+              <AnimatePresence mode="wait">
+                {step === 1 ? (
+                  <motion.section
+                    key="step1"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                  >
+                    <h3 className="text-sm font-bold tracking-tighter mb-6">
+                      {t("message_label")}
+                    </h3>
+                    {/* Added cursor-text (standard for inputs) */}
+                    <textarea
+                      placeholder={t("message_placeholder")}
+                      className="w-full bg-transparent border-b py-4 text-sm outline-none resize-none min-h-[150px] cursor-text"
+                      style={{
+                        borderColor:
+                          showError && !formData.message
+                            ? theme.bg
+                            : `${theme.bg}44`,
+                      }}
+                      value={formData.message}
+                      onChange={(e) => update("message", e.target.value)}
                     />
-                  ))}
-                  {formData.channel === "chat" && (
-                    <div className="grid grid-cols-2 gap-2 mt-4">
-                      {["WhatsApp", "Signal", "Telegram", "SMS"].map((app) => (
-                        <Choice
-                          key={app}
-                          label={app}
-                          selected={formData.messagingApp === app}
-                          onClick={() => update("messagingApp", app)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </motion.section>
-              )}
+                  </motion.section>
+                ) : (
+                  <motion.section
+                    key="step2"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                  >
+                    <h3 className="text-sm font-bold tracking-tighter mb-6">
+                      {t("get_in_touch")}
+                    </h3>
+                    <input
+                      placeholder={t("form_contact_placeholder")}
+                      className="w-full border-b bg-transparent py-4 text-lg outline-none mb-6 cursor-text"
+                      style={{
+                        borderColor: theme.bg,
+                      }}
+                      value={formData.contact}
+                      onChange={(e) => update("contact", e.target.value)}
+                    />
+                    {["email", "call", "chat"].map((ch) => (
+                      <Choice
+                        key={ch}
+                        label={t(`form_channel_${ch}`)}
+                        selected={formData.channel === ch}
+                        onClick={() => update("channel", ch)}
+                      />
+                    ))}
+                    {formData.channel === "chat" && (
+                      <div className="grid grid-cols-2 gap-2 mt-4">
+                        {["WhatsApp", "Signal", "Telegram", "SMS"].map(
+                          (app) => (
+                            <Choice
+                              key={app}
+                              label={app}
+                              selected={formData.messagingApp === app}
+                              onClick={() => update("messagingApp", app)}
+                            />
+                          ),
+                        )}
+                      </div>
+                    )}
+                  </motion.section>
+                )}
+              </AnimatePresence>
             </div>
 
             <footer
-              className="mt-8 pt-6 border-t flex justify-between items-center"
+              className="mt-8 pt-6 border-t flex flex-col gap-4"
               style={{ borderColor: `${theme.bg}22` }}
             >
-              {step > 1 && (
-                <button onClick={() => setStep(1)} className="p-2 outline-none">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={theme.bg}
-                    strokeWidth="1.5"
-                  >
-                    <path
-                      d="M19 12H5M5 12L12 19M5 12L12 5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
+              {showError && (
+                <motion.span
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-sm tracking-tight"
+                  style={{ color: theme.bg }}
+                >
+                  {t("form_error_required")}
+                </motion.span>
               )}
-              <div />
-              <button
-                onClick={handleNext}
-                className="flex items-center gap-3 outline-none group"
-              >
-                {step === 2 && (
-                  <span className="text-[10px] tracking-widest">
-                    {t("form_submit")}
-                  </span>
-                )}
-                <div className="p-2 transition-transform group-hover:translate-x-1">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={theme.bg}
-                    strokeWidth="1.5"
+
+              <div className="flex justify-between items-center w-full">
+                {step > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="p-2 outline-none cursor-pointer"
                   >
-                    <path
-                      d="M5 12H19M19 12L12 5M19 12L12 19"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              </button>
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={theme.bg}
+                      strokeWidth="1.5"
+                    >
+                      <path
+                        d="M19 12H5M5 12L12 19M5 12L12 5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="flex items-center gap-3 outline-none group cursor-pointer"
+                >
+                  {step === 2 && (
+                    <span className="text-[10px] tracking-widest">
+                      {t("form_submit")}
+                    </span>
+                  )}
+                  <div className="p-2 transition-transform group-hover:translate-x-1">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={theme.bg}
+                      strokeWidth="1.5"
+                    >
+                      <path
+                        d="M5 12H19M19 12L12 5M19 12L12 19"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </button>
+              </div>
             </footer>
           </motion.div>
         )}

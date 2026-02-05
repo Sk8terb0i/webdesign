@@ -2,7 +2,8 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import WebInquiryForm from "./WebInquiryForm";
 import StreamInquiryForm from "./StreamInquiryForm";
-import GeneralInquiryForm from "./GeneralInquiryForm"; // Added Import
+import GeneralInquiryForm from "./GeneralInquiryForm";
+import PhotoCollage from "./PhotoCollage";
 
 const NavSection = ({
   title,
@@ -74,7 +75,7 @@ const NavSection = ({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden relative"
+                        className="relative"
                       >
                         {sub.type === "list" ? (
                           <ul className="mt-2 mb-4 space-y-3 pl-[4.5rem] md:pl-[5rem]">
@@ -121,7 +122,6 @@ const NavSection = ({
                                     onSuccess={() => onToggleLevel1(id, [])}
                                   />
                                 ) : (
-                                  /* General Contact Form Case */
                                   <GeneralInquiryForm
                                     t={t}
                                     theme={theme}
@@ -131,22 +131,58 @@ const NavSection = ({
                               </div>
                             </div>
                           </div>
-                        ) : (
-                          <div
-                            className="pl-[4.5rem] md:pl-[5rem] py-2 text-xs max-w-md lowercase leading-relaxed"
-                            style={{ color: theme.level3 }}
-                          >
-                            {sub.contentIsLink ? (
-                              <a
-                                href={`mailto:${t(sub.contentKey)}`}
-                                className="font-bold hover:opacity-70"
+                        ) : sub.type === "link" ? (
+                          <div className="pl-[4.5rem] md:pl-[5rem] py-2">
+                            <a
+                              href={sub.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-bold hover:opacity-70 transition-opacity flex items-center gap-2 w-fit"
+                              style={{ color: theme.level3 }}
+                            >
+                              {/* Just the filename, no label, no brackets */}
+                              <span>{sub.fileName}</span>
+
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                               >
-                                {t(sub.contentKey)}
-                              </a>
-                            ) : (
-                              t(sub.contentKey)
-                            )}
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                <polyline points="15 3 21 3 21 9" />
+                                <line x1="10" y1="14" x2="21" y2="3" />
+                              </svg>
+                            </a>
                           </div>
+                        ) : (
+                          <>
+                            <div
+                              className="pl-[4.5rem] md:pl-[5rem] py-2 text-xs max-w-md leading-relaxed"
+                              style={{ color: theme.level3 }}
+                            >
+                              {sub.contentIsLink ? (
+                                <a
+                                  href={`mailto:${t(sub.contentKey)}`}
+                                  className="font-bold hover:opacity-70"
+                                >
+                                  {t(sub.contentKey)}
+                                </a>
+                              ) : (
+                                t(sub.contentKey)
+                              )}
+                            </div>
+
+                            {sub.id === "about-details" && (
+                              <div className="md:hidden w-full h-[350px] mt-4 pointer-events-auto relative">
+                                <PhotoCollage theme={theme} />
+                              </div>
+                            )}
+                          </>
                         )}
                       </motion.div>
                     )}

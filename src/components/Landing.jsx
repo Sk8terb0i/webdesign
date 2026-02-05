@@ -7,6 +7,9 @@ import ThemeControls from "./ThemeControls";
 import WebInquiryForm from "./WebInquiryForm";
 import StreamInquiryForm from "./StreamInquiryForm";
 import GeneralInquiryForm from "./GeneralInquiryForm";
+import PhotoCollage from "./PhotoCollage";
+import cvEn from "../assets/cv/CV_EN_2025.pdf";
+import cvDe from "../assets/cv/CV_DE_2025.pdf";
 
 const themes = [
   {
@@ -45,8 +48,7 @@ const CIRCLE_SETTINGS = {
   expandRadius: "150%",
 };
 
-// Moved outside to be accessible by handleLevel1Toggle logic
-const getSectionsData = (t) => [
+const getSectionsData = (t, isEn) => [
   {
     id: "web",
     title: "web design",
@@ -97,6 +99,13 @@ const getSectionsData = (t) => [
         type: "simple",
         contentKey: "about_text",
       },
+      {
+        id: "about-cv",
+        labelKey: "cv_label",
+        type: "link",
+        href: isEn ? cvEn : cvDe,
+        fileName: t("cv_file"),
+      },
     ],
   },
   {
@@ -104,9 +113,9 @@ const getSectionsData = (t) => [
     title: t("contact_me"),
     subs: [
       {
-        id: "contact-form", // Changed ID
+        id: "contact-form",
         labelKey: "get_in_touch",
-        type: "form", // Changed type to form
+        type: "form",
       },
     ],
   },
@@ -159,7 +168,7 @@ const MainUIContent = React.memo(
     onHover,
   }) => {
     const isWebExpanded = openSections.includes("web-inquiry");
-    const sectionsData = getSectionsData(t);
+    const sectionsData = getSectionsData(t, isEn);
 
     return (
       <div className="absolute inset-0 p-6 md:p-12 flex flex-col justify-between">
@@ -206,12 +215,11 @@ const MainUIContent = React.memo(
           </div>
         </div>
 
-        {/* desktop-only inquiry form panel */}
         <div className="hidden md:flex fixed inset-y-0 right-0 w-[66.6vw] pointer-events-none items-center justify-center z-40">
           <AnimatePresence mode="wait">
-            {(openSections.includes("web-inquiry") ||
-              openSections.includes("stream-inquiry") ||
-              openSections.includes("contact-form")) && (
+            {openSections.includes("web-inquiry") ||
+            openSections.includes("stream-inquiry") ||
+            openSections.includes("contact-form") ? (
               <motion.div
                 key={
                   openSections.includes("web-inquiry")
@@ -265,7 +273,20 @@ const MainUIContent = React.memo(
                   </div>
                 </motion.div>
               </motion.div>
-            )}
+            ) : openSections.includes("about") ? (
+              <motion.div
+                key="about-collage-panel"
+                className="relative flex items-center justify-center h-full"
+                style={{ width: "40vw" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="pointer-events-auto w-full h-full flex items-center justify-center">
+                  <PhotoCollage theme={theme} />
+                </div>
+              </motion.div>
+            ) : null}
           </AnimatePresence>
         </div>
 
@@ -365,20 +386,22 @@ function Landing() {
   const handleLevel1Toggle = useCallback(
     (id) => {
       setOpenSections((prev) => {
+        // If already open, close it (empty the array)
         if (prev.includes(id)) return [];
 
-        const sections = getSectionsData(t);
+        const sections = getSectionsData(t, isEn);
         const section = sections.find((s) => s.id === id);
 
-        // Auto-expand if there is exactly one sub-item
-        if (section && section.subs && section.subs.length === 1) {
-          return [id, section.subs[0].id];
+        // If the section exists and has sub-items, open the parent AND all sub-items immediately
+        if (section && section.subs && section.subs.length > 0) {
+          const subIds = section.subs.map((sub) => sub.id);
+          return [id, ...subIds];
         }
 
         return [id];
       });
     },
-    [t],
+    [t, isEn],
   );
 
   const VerticalText = ({ color }) => (

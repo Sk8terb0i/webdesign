@@ -150,6 +150,9 @@ const resources = {
       form_message_label: "Anything I should know before we call?",
       direct_contact: "direct inquiry",
       back_to_form: "back to form",
+
+      cv_label: "experience",
+      cv_file: "Curriculum vitae",
     },
   },
   de: {
@@ -299,6 +302,9 @@ const resources = {
       form_message_label: "Gibt es etwas, das ich vorab wissen sollte?",
       direct_contact: "Direktanfrage",
       back_to_form: "Zurück zum Formular",
+
+      cv_label: "erfahrung",
+      cv_file: "Lebenslauf",
     },
   },
 };
