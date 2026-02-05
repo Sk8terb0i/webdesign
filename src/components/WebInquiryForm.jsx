@@ -1,5 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// --- ADJUSTED PRICES ---
+const PRICING_CONFIG = {
+  base: {
+    landing: [500, 1300, 2000],
+    new: [2000, 3500, 4500],
+    redesign: [1500, 3500, 6000],
+  },
+  // Unified page rate across all tiers
+  pageRate: [100, 100, 100],
+  features: {
+    shop_c: [1500, 2250, 3000], // Midpoint of 1500 & 3000
+    shop_e: [800, 1400, 2000], // Midpoint of 800 & 2000
+    admin: [400, 950, 1500], // Midpoint of 400 & 1500
+    book: [500, 1250, 2000], // Midpoint of 500 & 2000
+    login: [1000, 2000, 3000], // Midpoint of 1000 & 3000
+    api: [200, 600, 1000], // Midpoint of 200 & 1000
+  },
+  language: {
+    technical: 100, // per extra language
+    translation: 100, // additional per language if you translate
+  },
+  assets: [200, 600, 1000], // Midpoint of 200 & 1000
+  copy: [200, 600, 1000], // Midpoint of 200 & 1000
+};
 
 const WebInquiryForm = ({ t, theme, hideHeading = false }) => {
   const [step, setStep] = useState(1);
@@ -7,125 +32,134 @@ const WebInquiryForm = ({ t, theme, hideHeading = false }) => {
   const [submitted, setSubmitted] = useState(false);
   const [showError, setShowError] = useState(false);
 
-  const initialFormState = {
+  const [formData, setFormData] = useState({
     type: "",
     pages: "",
     features: [],
+    extraLangs: 0,
+    needsTranslation: false,
     assets: "",
     copy: "",
-    style: "",
     hosting: "",
-    budget: "",
+    selectedTier: "",
     contact: "",
     channel: "",
-    chatApp: "whatsapp",
     details: "",
-  };
+  });
 
-  const [formData, setFormData] = useState(initialFormState);
-
-  // INVERTED COLOR LOGIC
-  // The UI elements inside the form take the site's background color
-  const uiColor = theme.bg;
-  // The "fill" for selected items takes the site's text color
-  const bgColor = theme.text;
-
-  const update = (field, val) => {
-    setShowError(false);
-    setFormData((prev) => ({ ...prev, [field]: val }));
-  };
-
-  const toggleFeat = (f) => {
-    setShowError(false);
-    const next = formData.features.includes(f)
-      ? formData.features.filter((x) => x !== f)
-      : [...formData.features, f];
-    update("features", next);
-  };
-
-  const isStepComplete = (s) => {
-    switch (s) {
+  const isStepComplete = (stepNumber) => {
+    switch (stepNumber) {
       case 1:
         return !!(formData.type && formData.pages);
       case 2:
-        return formData.features.length > 0;
+        if (formData.features.includes("lang")) return formData.extraLangs > 0;
+        return true;
       case 3:
         return !!(formData.assets && formData.copy);
       case 4:
-        return !!(formData.hosting && formData.budget);
+        return !!formData.hosting;
       case 5:
+        return !!formData.selectedTier;
+      case 6:
         return !!(formData.contact && formData.channel);
       default:
         return false;
     }
   };
 
-  const canSubmit = wantsCall
-    ? !!formData.contact
-    : [1, 2, 3, 4, 5].every((s) => isStepComplete(s));
-
-  const handleSubmit = () => {
-    if (!canSubmit) {
-      setShowError(true);
-      return;
+  useEffect(() => {
+    if (formData.type === "landing") {
+      update("pages", "1-5");
     }
-    setSubmitted(true);
+  }, [formData.type]);
 
-    setTimeout(() => {
-      setSubmitted(false);
-      setStep(1);
-      setWantsCall(false);
-      setFormData(initialFormState);
-      setShowError(false);
-    }, 6000);
+  const calculatedTiers = useMemo(() => {
+    if (!formData.type) return [0, 0, 0];
+    return [0, 1, 2].map((idx) => {
+      let total = PRICING_CONFIG.base[formData.type][idx];
+
+      if (formData.type === "landing") {
+        // Landing page is strictly 1 page switch (+100)
+        total += PRICING_CONFIG.pageRate[idx] * 1;
+      } else {
+        // Calculate middle price for ranges
+        if (formData.pages === "1-5")
+          total += PRICING_CONFIG.pageRate[idx] * 2.5; // Average of 1-5 is 2.5 -> 250 CHF
+        if (formData.pages === "5-10")
+          total += PRICING_CONFIG.pageRate[idx] * 7.5; // Average of 5-10 is 7.5 -> 750 CHF
+        if (formData.pages === "10+")
+          total += PRICING_CONFIG.pageRate[idx] * 12; // Baseline for 10+ is 12 -> 1200 CHF
+      }
+
+      formData.features.forEach((f) => {
+        if (PRICING_CONFIG.features[f])
+          total += PRICING_CONFIG.features[f][idx];
+      });
+
+      if (formData.features.includes("lang")) {
+        const perLangCost =
+          PRICING_CONFIG.language.technical +
+          (formData.needsTranslation ? PRICING_CONFIG.language.translation : 0);
+        total += formData.extraLangs * perLangCost;
+      }
+
+      if (formData.assets === "need") total += PRICING_CONFIG.assets[idx];
+      if (formData.copy === "need") total += PRICING_CONFIG.copy[idx];
+      return total;
+    });
+  }, [formData]);
+
+  const update = (field, val) => {
+    setShowError(false);
+    setFormData((prev) => ({ ...prev, [field]: val }));
   };
 
-  const Choice = ({ label, selected, onClick, isCheck = false }) => (
+  const Choice = ({
+    label,
+    sublabel,
+    selected,
+    onClick,
+    disabled = false,
+    isCheck = false,
+  }) => (
     <button
       type="button"
-      onClick={onClick}
-      className="flex items-center justify-between w-full px-4 py-3 text-[11px] tracking-wider transition-all duration-200 border mb-2 group cursor-pointer"
+      onClick={disabled ? null : onClick}
+      className={`group flex flex-col w-full px-4 py-3 border mb-2 transition-all relative outline-none
+    ${disabled ? "cursor-not-allowed opacity-20" : "cursor-pointer hover:opacity-100"} 
+    ${selected ? "pointer-events-none" : ""} 
+  `}
       style={{
-        color: selected ? bgColor : uiColor,
-        borderColor: selected ? uiColor : `${uiColor}44`,
-        backgroundColor: selected ? uiColor : "transparent",
+        color: selected ? theme.text : theme.bg,
+        borderColor: selected ? theme.bg : `${theme.bg}44`,
+        backgroundColor: selected ? theme.bg : "transparent",
+        opacity: 1,
       }}
     >
-      <span style={{ fontWeight: selected ? "600" : "400" }}>{label}</span>
-      <div
-        className={`w-1.5 h-1.5 transition-all duration-300 ${isCheck ? "rotate-45" : "rounded-full"}`}
-        style={{
-          backgroundColor: selected ? bgColor : "transparent",
-          border: `1px solid ${selected ? bgColor : uiColor}`,
-          opacity: selected ? 1 : 0.3,
-        }}
-      />
+      <div className="flex items-center justify-between w-full relative z-10">
+        <span className="text-[11px] tracking-wider font-medium">{label}</span>
+        <div
+          className={`w-1.5 h-1.5 transition-colors duration-200 ${isCheck ? "rotate-45" : "rounded-full"}`}
+          style={{
+            backgroundColor: selected ? theme.text : "transparent",
+            border: `1px solid ${selected ? theme.text : theme.bg}`,
+          }}
+        />
+      </div>
+
+      {sublabel && (
+        <span className="text-[9px] mt-1 opacity-60 text-left relative z-10">
+          {sublabel}
+        </span>
+      )}
     </button>
   );
 
-  if (submitted) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="w-full h-64 flex flex-col items-center justify-center text-center space-y-4"
-        style={{ color: uiColor }}
-      >
-        <h2 className="text-2xl font-bold tracking-tighter leading-none">
-          {t("form_success_title")}
-        </h2>
-        <p className="text-sm opacity-60 tracking-widest max-w-[280px] leading-relaxed">
-          {t("form_success_body")}
-        </p>
-      </motion.div>
-    );
-  }
-
   return (
-    <div className="w-full flex flex-col font-sans" style={{ color: uiColor }}>
+    <div className="w-full flex flex-col font-sans" style={{ color: theme.bg }}>
       {!hideHeading && (
         <header className="mb-8">
-          <h2 className="text-2xl font-bold tracking-tighter mb-2 leading-none">
+          <h2 className="text-2xl font-bold tracking-tighter mb-2">
             {t("form_title_web")}
           </h2>
           <p className="text-[10px] opacity-60 tracking-widest">
@@ -134,362 +168,405 @@ const WebInquiryForm = ({ t, theme, hideHeading = false }) => {
         </header>
       )}
 
-      <div className="mb-8">
-        {!wantsCall && (
+      {!wantsCall && (
+        <div className="mb-8">
           <div className="flex gap-1 mb-6">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <button
-                key={s}
-                onClick={() => setStep(s)}
-                className="h-1 flex-grow transition-all duration-300 cursor-pointer hover:opacity-60"
-                style={{
-                  backgroundColor: uiColor,
-                  opacity: step === s || isStepComplete(s) ? 1 : 0.15,
-                }}
-              />
-            ))}
+            {[1, 2, 3, 4, 5, 6].map((s) => {
+              const isActive = step === s;
+              const isComplete = isStepComplete(s);
+
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStep(s)}
+                  className="h-1 flex-grow transition-all duration-300 cursor-pointer border-none p-0 relative group"
+                  style={{
+                    backgroundColor: theme.bg,
+                    opacity: isActive ? 1 : isComplete ? 0.5 : 0.15,
+                  }}
+                >
+                  <style jsx>{`
+                    button:hover {
+                      opacity: ${isActive ? 1 : 0.4} !important;
+                    }
+                  `}</style>
+                  <div className="absolute -inset-y-3 inset-x-0" />
+                </button>
+              );
+            })}
           </div>
-        )}
-
-        <div className="flex items-center justify-between px-1">
-          <span className="text-[9px] tracking-[0.2em] opacity-50">
-            {wantsCall ? t("direct_contact") : `${t("step")} ${step} / 5`}
-          </span>
-          <button
-            onClick={() => {
-              setWantsCall(!wantsCall);
-              setStep(1);
-              setShowError(false);
-            }}
-            className="text-[9px] tracking-[0.2em] underline underline-offset-4 cursor-pointer"
-            style={{ color: uiColor }}
-          >
-            {wantsCall ? t("back_to_form") : t("form_skip_to_call")}
-          </button>
         </div>
-      </div>
+      )}
 
-      <div className="flex-grow min-h-[350px]">
+      <div className="flex-grow min-h-[450px]">
         <AnimatePresence mode="wait">
-          {wantsCall ? (
+          {step === 1 && (
             <motion.section
-              key="call"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
+              key="s1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
             >
-              <div>
-                <label className="text-[10px] tracking-widest block mb-4 opacity-70">
-                  {t("form_phone_label")}
-                </label>
-                <input
-                  placeholder="+41..."
-                  className="w-full bg-transparent border-b py-3 text-lg outline-none placeholder:opacity-30"
-                  style={{ borderColor: uiColor, color: uiColor }}
-                  onChange={(e) => update("contact", e.target.value)}
-                  value={formData.contact}
+              <h3 className="text-sm font-bold tracking-tighter mb-6">
+                {t("section_1")}
+              </h3>
+              {["new", "redesign", "landing"].map((type) => (
+                <Choice
+                  key={type}
+                  label={t(`form_scope_${type}`)}
+                  selected={formData.type === type}
+                  onClick={() => update("type", type)}
                 />
-              </div>
-              <div>
-                <label className="text-[10px] tracking-widest block mb-4 opacity-70">
-                  {t("form_message_label")} ({t("optional")})
-                </label>
-                <textarea
-                  className="w-full bg-transparent border p-4 text-sm h-40 outline-none resize-none placeholder:opacity-30"
-                  style={{ borderColor: `${uiColor}44`, color: uiColor }}
-                  onChange={(e) => update("details", e.target.value)}
-                  value={formData.details}
-                />
+              ))}
+              {formData.type === "landing" && (
+                <p
+                  className="text-[9px] mt-2 opacity-70 leading-relaxed italic border-l-2 pl-3"
+                  style={{ borderColor: theme.bg }}
+                >
+                  {t("form_scope_landing_note")}
+                </p>
+              )}
+              <div className="mt-8">
+                <h3 className="text-[10px] tracking-widest mb-1 opacity-70">
+                  {t("form_pages_label")} (pages)
+                </h3>
+                <p className="text-[9px] mb-4 opacity-50 italic">
+                  {t("form_pages_hint")}
+                </p>
+                {["1-5", "5-10", "10+"].map((p) => {
+                  const displayValue =
+                    p === "1-5" && formData.type === "landing" ? "1" : p;
+
+                  return (
+                    <Choice
+                      key={p}
+                      label={displayValue}
+                      selected={formData.pages === p}
+                      onClick={() => update("pages", p)}
+                      disabled={formData.type === "landing" && p !== "1-5"}
+                    />
+                  );
+                })}
               </div>
             </motion.section>
-          ) : (
-            <>
-              {step === 1 && (
-                <motion.section
-                  key="s1"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-sm font-bold tracking-tighter mb-6">
-                    {t("section_1")}
-                  </h3>
-                  <div className="flex flex-col gap-1">
-                    {["new", "redesign", "landing"].map((type) => (
-                      <Choice
-                        key={type}
-                        label={t(`form_scope_${type}`)}
-                        selected={formData.type === type}
-                        onClick={() => update("type", type)}
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-8">
-                    <h3 className="text-[10px] tracking-widest mb-4 opacity-70">
-                      {t("form_pages_label")}
-                    </h3>
-                    <div className="flex flex-col gap-1">
-                      {["1-5", "5-10", "10+"].map((p) => (
-                        <Choice
-                          key={p}
-                          label={p}
-                          selected={formData.pages === p}
-                          onClick={() => update("pages", p)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </motion.section>
-              )}
+          )}
 
-              {step === 2 && (
-                <motion.section
-                  key="s2"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-sm font-bold tracking-tighter mb-6">
-                    {t("section_2")}
-                  </h3>
-                  <div className="flex flex-col gap-1">
-                    {[
-                      "shop_c",
-                      "shop_e",
-                      "admin",
-                      "lang",
-                      "book",
-                      "login",
-                      "api",
-                    ].map((feat) => (
-                      <Choice
-                        key={feat}
-                        isCheck
-                        label={t(`form_feat_${feat}`)}
-                        selected={formData.features.includes(feat)}
-                        onClick={() => toggleFeat(feat)}
-                      />
-                    ))}
-                  </div>
-                </motion.section>
-              )}
+          {step === 2 && (
+            <motion.section
+              key="s2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <h3 className="text-sm font-bold tracking-tighter mb-6">
+                {t("section_2")}
+              </h3>
+              {Object.keys(PRICING_CONFIG.features).map((f) => (
+                <Choice
+                  key={f}
+                  isCheck
+                  label={t(`form_feat_${f}`)}
+                  selected={formData.features.includes(f)}
+                  onClick={() => {
+                    const next = formData.features.includes(f)
+                      ? formData.features.filter((x) => x !== f)
+                      : [...formData.features, f];
+                    update("features", next);
+                  }}
+                />
+              ))}
 
-              {step === 3 && (
-                <motion.section
-                  key="s3"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-sm font-bold tracking-tighter mb-6">
-                    {t("section_3")}
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="flex flex-col gap-1">
-                      <Choice
-                        label={t("form_assets_ready")}
-                        selected={formData.assets === "ready"}
-                        onClick={() => update("assets", "ready")}
-                      />
-                      <Choice
-                        label={t("form_assets_need")}
-                        selected={formData.assets === "need"}
-                        onClick={() => update("assets", "need")}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <Choice
-                        label={t("form_copy_provide")}
-                        selected={formData.copy === "provide"}
-                        onClick={() => update("copy", "provide")}
-                      />
-                      <Choice
-                        label={t("form_copy_need")}
-                        selected={formData.copy === "need"}
-                        onClick={() => update("copy", "need")}
-                      />
-                    </div>
+              <div
+                className="mt-4 border-t pt-4"
+                style={{ borderColor: `${theme.bg}22` }}
+              >
+                <Choice
+                  isCheck
+                  label={t("form_feat_lang")}
+                  sublabel={t("form_feat_lang_desc")}
+                  selected={formData.features.includes("lang")}
+                  onClick={() => {
+                    const next = formData.features.includes("lang")
+                      ? formData.features.filter((x) => x !== "lang")
+                      : [...formData.features, "lang"];
+                    update("features", next);
+                  }}
+                />
+
+                {formData.features.includes("lang") && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="pl-4 space-y-4 mt-4"
+                  >
                     <div>
-                      <label className="text-[10px] tracking-widest block mt-4 opacity-70">
-                        {t("form_style_label")} ({t("optional")})
-                      </label>
-                      <input
-                        placeholder={t("form_style_placeholder")}
-                        className="w-full border-b bg-transparent py-4 text-sm outline-none placeholder:opacity-30"
-                        style={{ borderColor: uiColor, color: uiColor }}
-                        onChange={(e) => update("style", e.target.value)}
-                        value={formData.style}
-                      />
-                    </div>
-                  </div>
-                </motion.section>
-              )}
-
-              {step === 4 && (
-                <motion.section
-                  key="s4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-sm font-bold tracking-tighter mb-6">
-                    {t("section_4")}
-                  </h3>
-                  <div className="space-y-6">
-                    <div className="flex flex-col gap-1">
-                      {["github", "external"].map((h) => (
-                        <Choice
-                          key={h}
-                          label={t(
-                            `form_host_${h === "github" ? "free" : "ext"}`,
-                          )}
-                          selected={formData.hosting === h}
-                          onClick={() => update("hosting", h)}
-                        />
-                      ))}
-                    </div>
-                    <div>
-                      <h3 className="text-[10px] tracking-widest mb-4 opacity-70">
-                        {t("form_budget_label")}
-                      </h3>
-                      <div className="flex flex-col gap-1">
-                        {["low", "mid", "high"].map((b) => (
-                          <Choice
-                            key={b}
-                            label={t(`budget_${b}`)}
-                            selected={formData.budget === b}
-                            onClick={() => update("budget", b)}
-                          />
+                      <p className="text-[9px] tracking-widest mb-2 opacity-60">
+                        {t("form_lang_count")}
+                      </p>
+                      <div className="flex gap-2">
+                        {[1, 2, 3].map((num) => (
+                          <button
+                            key={num}
+                            onClick={() => update("extraLangs", num)}
+                            className="px-4 py-2 border text-[10px]"
+                            style={{
+                              borderColor:
+                                formData.extraLangs === num
+                                  ? theme.bg
+                                  : `${theme.bg}44`,
+                              backgroundColor:
+                                formData.extraLangs === num
+                                  ? theme.bg
+                                  : "transparent",
+                              color:
+                                formData.extraLangs === num
+                                  ? theme.text
+                                  : theme.bg,
+                            }}
+                          >
+                            +{num}
+                          </button>
                         ))}
                       </div>
                     </div>
-                  </div>
-                </motion.section>
-              )}
-
-              {step === 5 && (
-                <motion.section
-                  key="s5"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-sm font-bold tracking-tighter mb-6">
-                    {t("get_in_touch_out")}
-                  </h3>
-                  <input
-                    placeholder={t("form_contact_placeholder")}
-                    className="w-full border-b bg-transparent py-4 text-lg outline-none placeholder:opacity-30 mb-8"
-                    style={{ borderColor: uiColor, color: uiColor }}
-                    onChange={(e) => update("contact", e.target.value)}
-                    value={formData.contact}
-                  />
-                  <div className="flex flex-col gap-1 mb-6">
-                    {["email", "call", "chat"].map((ch) => (
+                    <div>
+                      <p className="text-[9px] tracking-widest mb-2 opacity-60">
+                        {t("form_lang_service")}
+                      </p>
                       <Choice
-                        key={ch}
-                        label={t(`form_channel_${ch}`)}
-                        selected={formData.channel === ch}
-                        onClick={() => update("channel", ch)}
+                        label={t("form_lang_service_yes")}
+                        selected={formData.needsTranslation}
+                        onClick={() => update("needsTranslation", true)}
                       />
-                    ))}
-                    <AnimatePresence>
-                      {formData.channel === "chat" && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="overflow-hidden"
+                      <Choice
+                        label={t("form_lang_service_no")}
+                        selected={!formData.needsTranslation}
+                        onClick={() => update("needsTranslation", false)}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.section>
+          )}
+
+          {step === 3 && (
+            <motion.section
+              key="s3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <h3 className="text-sm font-bold tracking-tighter mb-6">
+                {t("section_3")}
+              </h3>
+              <div className="mb-6">
+                <Choice
+                  label={t("form_assets_ready")}
+                  selected={formData.assets === "ready"}
+                  onClick={() => update("assets", "ready")}
+                />
+                <Choice
+                  label={t("form_assets_need")}
+                  selected={formData.assets === "need"}
+                  onClick={() => update("assets", "need")}
+                />
+              </div>
+              <Choice
+                label={t("form_copy_provide")}
+                selected={formData.copy === "provide"}
+                onClick={() => update("copy", "provide")}
+              />
+              <Choice
+                label={t("form_copy_need")}
+                selected={formData.copy === "need"}
+                onClick={() => update("copy", "need")}
+              />
+            </motion.section>
+          )}
+
+          {step === 4 && (
+            <motion.section
+              key="s4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <h3 className="text-sm font-bold tracking-tighter mb-6">
+                {t("section_4")}
+              </h3>
+              <Choice
+                label={t("form_host_free")}
+                selected={formData.hosting === "github"}
+                onClick={() => update("hosting", "github")}
+              />
+              <Choice
+                label={t("form_host_ext")}
+                selected={formData.hosting === "external"}
+                onClick={() => update("hosting", "external")}
+              />
+            </motion.section>
+          )}
+
+          {step === 5 && (
+            <motion.section
+              key="s5"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <div className="mb-6">
+                <h3 className="text-sm font-bold tracking-tighter">
+                  {t("section_level")}
+                </h3>
+                <p className="text-[9px] opacity-50 italic mt-1">
+                  {t("form_price_disclaimer")}
+                </p>
+              </div>
+              <div className="space-y-4">
+                {["basic", "premium", "horse"].map((tier, i) => {
+                  const isPremium = tier === "premium";
+                  const isSelected = formData.selectedTier === tier;
+                  return (
+                    <button
+                      key={tier}
+                      onClick={() => update("selectedTier", tier)}
+                      className="w-full p-5 border text-left transition-all relative outline-none"
+                      style={{
+                        borderWidth: isPremium ? "1.5px" : "1px",
+                        borderColor: isSelected
+                          ? theme.bg
+                          : isPremium
+                            ? `${theme.bg}88`
+                            : `${theme.bg}33`,
+                        backgroundColor: isSelected ? theme.bg : "transparent",
+                        color: isSelected ? theme.text : theme.bg,
+                        transform: isPremium ? "scale(1.02)" : "scale(1)",
+                        zIndex: isPremium ? 10 : 1,
+                      }}
+                    >
+                      {isPremium && !isSelected && (
+                        <span
+                          className="absolute -top-2.5 left-4 px-2 py-0.5 text-[8px] tracking-[0.2em] uppercase font-bold"
+                          style={{
+                            backgroundColor: theme.text,
+                            color: theme.bg,
+                          }}
                         >
-                          <div className="grid grid-cols-2 gap-1 mb-4">
-                            {["whatsapp", "signal", "telegram", "sms"].map(
-                              (app) => (
-                                <button
-                                  key={app}
-                                  onClick={() => update("chatApp", app)}
-                                  className="py-2 text-[9px] border tracking-widest transition-all"
-                                  style={{
-                                    color:
-                                      formData.chatApp === app
-                                        ? bgColor
-                                        : uiColor,
-                                    backgroundColor:
-                                      formData.chatApp === app
-                                        ? uiColor
-                                        : "transparent",
-                                    borderColor:
-                                      formData.chatApp === app
-                                        ? uiColor
-                                        : `${uiColor}44`,
-                                  }}
-                                >
-                                  {t(`form_app_${app}`)}
-                                </button>
-                              ),
-                            )}
-                          </div>
-                        </motion.div>
+                          {t("level_premium_hint")}
+                        </span>
                       )}
-                    </AnimatePresence>
-                  </div>
-                  <textarea
-                    placeholder={`${t("form_details")} (${t("optional")})`}
-                    className="w-full border bg-transparent p-4 text-sm h-32 outline-none resize-none placeholder:opacity-30"
-                    style={{ borderColor: `${uiColor}44`, color: uiColor }}
-                    onChange={(e) => update("details", e.target.value)}
-                    value={formData.details}
-                  />
-                </motion.section>
-              )}
-            </>
+                      <div className="flex justify-between items-end">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] tracking-widest font-bold uppercase">
+                            {t(`level_${tier}`)}
+                          </span>
+                          <span className="text-[9px] opacity-60 mt-0.5">
+                            {isPremium ? t("recommended_path") : ""}
+                          </span>
+                        </div>
+                        <span className="text-xl font-bold">
+                          CHF {calculatedTiers[i].toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-[9px] mt-3 opacity-70 leading-relaxed max-w-[80%]">
+                        {t(`level_${tier}_desc`)}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+              {/* FREE CONSULTATION NOTE */}
+              <div
+                className="mt-6 p-4 border border-dashed text-center"
+                style={{ borderColor: `${theme.bg}44` }}
+              >
+                <p className="text-[10px] tracking-wide opacity-80">
+                  {t("free_consultation_note")}
+                </p>
+              </div>
+            </motion.section>
+          )}
+
+          {step === 6 && (
+            <motion.section
+              key="s6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <h3 className="text-sm font-bold tracking-tighter mb-6">
+                {t("get_in_touch_out")}
+              </h3>
+              <input
+                placeholder={t("form_contact_placeholder")}
+                className="w-full border-b bg-transparent py-4 text-lg outline-none mb-6"
+                style={{ borderColor: theme.bg }}
+                onChange={(e) => update("contact", e.target.value)}
+              />
+              {["email", "call", "chat"].map((ch) => (
+                <Choice
+                  key={ch}
+                  label={t(`form_channel_${ch}`)}
+                  selected={formData.channel === ch}
+                  onClick={() => update("channel", ch)}
+                />
+              ))}
+            </motion.section>
           )}
         </AnimatePresence>
       </div>
 
       <footer
-        className="mt-8 pt-6 border-t"
-        style={{ borderColor: `${uiColor}22` }}
+        className="mt-8 pt-6 border-t flex justify-between items-center"
+        style={{ borderColor: `${theme.bg}22` }}
       >
-        <AnimatePresence>
-          {showError && (
-            <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="mb-4"
-            >
-              <p className="text-[9px] font-bold tracking-[0.2em] text-red-500 uppercase">
-                ! {t("form_error_required")}
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="flex justify-between items-center">
-          {!wantsCall && step > 1 ? (
-            <button
-              onClick={() => setStep(step - 1)}
-              className="text-[10px] font-bold tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
-            >
-              {t("button_back")}
-            </button>
-          ) : (
-            <div />
-          )}
-
+        {step > 1 ? (
           <button
-            onClick={() =>
-              wantsCall || step === 5 ? handleSubmit() : setStep(step + 1)
-            }
-            className="group flex items-center gap-4 py-4 text-[10px] font-bold tracking-[0.3em] transition-all cursor-pointer"
-            style={{
-              color: uiColor,
-              opacity: (wantsCall || step === 5) && !canSubmit ? 0.3 : 1,
-            }}
+            onClick={() => setStep(step - 1)}
+            className="group flex items-center cursor-pointer p-2 -ml-2 transition-transform active:scale-95"
+            aria-label={t("button_back")}
           >
-            {wantsCall || step === 5 ? t("form_submit") : t("button_next")}
-            {!wantsCall && step < 5 && (
-              <span className="group-hover:translate-x-1 transition-transform">
-                →
-              </span>
-            )}
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={theme.bg}
+              strokeWidth="1.5"
+              className="opacity-40 group-hover:opacity-100 transition-opacity"
+            >
+              <path
+                d="M19 12H5M5 12L12 19M5 12L12 5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
-        </div>
+        ) : (
+          <div />
+        )}
+
+        <button
+          onClick={() => (step === 6 ? setSubmitted(true) : setStep(step + 1))}
+          className="group flex items-center gap-3 cursor-pointer transition-all active:scale-95"
+        >
+          {step === 6 && (
+            <span className="text-[10px] tracking-[0.2em] opacity-100">
+              {t("form_submit")}
+            </span>
+          )}
+          <div className="p-2 -mr-2 transition-transform group-hover:translate-x-1">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={theme.bg}
+              strokeWidth="1.5"
+            >
+              <path
+                d="M5 12H19M19 12L12 5M19 12L12 19"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </button>
       </footer>
     </div>
   );
