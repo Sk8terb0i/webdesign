@@ -1,10 +1,12 @@
-import React, { useState, useCallback, useEffect, useRef } from "react"; // Added useRef
-import { useTranslation } from "react-i18next"; // Added this import
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "./Header";
 import NavSection from "./NavSection";
 import ThemeControls from "./ThemeControls";
 import WebInquiryForm from "./WebInquiryForm";
+import StreamInquiryForm from "./StreamInquiryForm";
+import GeneralInquiryForm from "./GeneralInquiryForm";
 
 const themes = [
   {
@@ -42,6 +44,73 @@ const CIRCLE_SETTINGS = {
   dragRadius: "27%",
   expandRadius: "150%",
 };
+
+// Moved outside to be accessible by handleLevel1Toggle logic
+const getSectionsData = (t) => [
+  {
+    id: "web",
+    title: "web design",
+    subs: [
+      {
+        id: "web-ex",
+        labelKey: "examples",
+        type: "simple",
+        contentKey: "examples",
+      },
+      {
+        id: "web-tech",
+        labelKey: "web_technical",
+        type: "list",
+        items: [1, 2, 3, 4, 6, 7, 8],
+        translationPrefix: "web_p",
+      },
+      { id: "web-inquiry", labelKey: "form_title_web", type: "form" },
+    ],
+  },
+  {
+    id: "stream",
+    title: "live streaming",
+    subs: [
+      {
+        id: "stream-ex",
+        labelKey: "examples",
+        type: "simple",
+        contentKey: "examples",
+      },
+      {
+        id: "stream-tech",
+        labelKey: "stream_technical",
+        type: "list",
+        items: [1, 2, 3, 4, 5],
+        translationPrefix: "stream_p",
+      },
+      { id: "stream-inquiry", labelKey: "form_title_stream", type: "form" },
+    ],
+  },
+  {
+    id: "about",
+    title: t("about_me"),
+    subs: [
+      {
+        id: "about-details",
+        labelKey: "details",
+        type: "simple",
+        contentKey: "about_text",
+      },
+    ],
+  },
+  {
+    id: "contact",
+    title: t("contact_me"),
+    subs: [
+      {
+        id: "contact-form", // Changed ID
+        labelKey: "get_in_touch",
+        type: "form", // Changed type to form
+      },
+    ],
+  },
+];
 
 const DragIndicator = ({ color, isDragging, isExpanding, t }) => (
   <motion.div
@@ -89,75 +158,8 @@ const MainUIContent = React.memo(
     onThemeMouseDown,
     onHover,
   }) => {
-    // Check if the specific form sub-id is open
     const isWebExpanded = openSections.includes("web-inquiry");
-
-    const sectionsData = [
-      {
-        id: "web",
-        title: "web design",
-        subs: [
-          {
-            id: "web-ex",
-            labelKey: "examples",
-            type: "simple",
-            contentKey: "examples",
-          },
-          {
-            id: "web-tech",
-            labelKey: "web_technical",
-            type: "list",
-            items: [1, 2, 3, 4, 6, 7, 8],
-            translationPrefix: "web_p",
-          },
-          { id: "web-inquiry", labelKey: "form_title_web", type: "form" },
-        ],
-      },
-      {
-        id: "stream",
-        title: "live streaming",
-        subs: [
-          {
-            id: "stream-ex",
-            labelKey: "examples",
-            type: "simple",
-            contentKey: "examples",
-          },
-          {
-            id: "stream-tech",
-            labelKey: "stream_technical",
-            type: "list",
-            items: [1, 2, 3, 4, 5],
-            translationPrefix: "stream_p",
-          },
-        ],
-      },
-      {
-        id: "about",
-        title: t("about_me"),
-        subs: [
-          {
-            id: "about-details",
-            labelKey: "details",
-            type: "simple",
-            contentKey: "about_text",
-          },
-        ],
-      },
-      {
-        id: "contact",
-        title: t("contact_me"),
-        subs: [
-          {
-            id: "contact-info",
-            labelKey: "get_in_touch",
-            type: "simple",
-            contentKey: "contact_email",
-            contentIsLink: true,
-          },
-        ],
-      },
-    ];
+    const sectionsData = getSectionsData(t);
 
     return (
       <div className="absolute inset-0 p-6 md:p-12 flex flex-col justify-between">
@@ -206,10 +208,18 @@ const MainUIContent = React.memo(
 
         {/* desktop-only inquiry form panel */}
         <div className="hidden md:flex fixed inset-y-0 right-0 w-[66.6vw] pointer-events-none items-center justify-center z-40">
-          <AnimatePresence>
-            {/* CHANGED: Trigger based on the sub-item ID instead of the main section ID */}
-            {openSections.includes("web-inquiry") && (
+          <AnimatePresence mode="wait">
+            {(openSections.includes("web-inquiry") ||
+              openSections.includes("stream-inquiry") ||
+              openSections.includes("contact-form")) && (
               <motion.div
+                key={
+                  openSections.includes("web-inquiry")
+                    ? "web-panel"
+                    : openSections.includes("stream-inquiry")
+                      ? "stream-panel"
+                      : "general-panel"
+                }
                 className="relative flex items-center justify-center h-full"
                 style={{ width: "30vw" }}
                 initial={{ opacity: 0 }}
@@ -231,13 +241,27 @@ const MainUIContent = React.memo(
                   transition={{ duration: 0.5, ease: "circOut" }}
                 >
                   <div style={{ width: "25vw" }}>
-                    <WebInquiryForm
-                      textColor={textColor}
-                      t={t}
-                      theme={theme}
-                      hideHeading={false}
-                      onSuccess={() => setOpenSections([])}
-                    />
+                    {openSections.includes("web-inquiry") ? (
+                      <WebInquiryForm
+                        textColor={textColor}
+                        t={t}
+                        theme={theme}
+                        onSuccess={() => setOpenSections([])}
+                      />
+                    ) : openSections.includes("stream-inquiry") ? (
+                      <StreamInquiryForm
+                        textColor={textColor}
+                        t={t}
+                        theme={theme}
+                        onSuccess={() => setOpenSections([])}
+                      />
+                    ) : (
+                      <GeneralInquiryForm
+                        t={t}
+                        theme={theme}
+                        onSuccess={() => setOpenSections([])}
+                      />
+                    )}
                   </div>
                 </motion.div>
               </motion.div>
@@ -245,7 +269,6 @@ const MainUIContent = React.memo(
           </AnimatePresence>
         </div>
 
-        {/* ThemeControls Wrap: Hides on mobile when form is expanded */}
         <div className="block md:block">
           <AnimatePresence>
             {!isWebExpanded && (
@@ -253,7 +276,7 @@ const MainUIContent = React.memo(
                 initial={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ duration: 0.3 }}
-                className="md:!opacity-100 md:!transform-none" // Force visible on desktop
+                className="md:!opacity-100 md:!transform-none"
               >
                 <ThemeControls
                   themes={themes}
@@ -278,7 +301,6 @@ const MainUIContent = React.memo(
 function Landing() {
   const { t, i18n } = useTranslation();
   const containerRef = useRef(null);
-
   const [openSections, setOpenSections] = useState([]);
   const [themeIndex, setThemeIndex] = useState(() => {
     const saved = localStorage.getItem("selectedThemeIndex");
@@ -340,10 +362,24 @@ function Landing() {
     };
   }, [isDragging, hoveredTheme, finalizeTheme, updateCursor]);
 
-  // FIXED: Removed auto-expansion logic
-  const handleLevel1Toggle = useCallback((id) => {
-    setOpenSections((prev) => (prev.includes(id) ? [] : [id]));
-  }, []);
+  const handleLevel1Toggle = useCallback(
+    (id) => {
+      setOpenSections((prev) => {
+        if (prev.includes(id)) return [];
+
+        const sections = getSectionsData(t);
+        const section = sections.find((s) => s.id === id);
+
+        // Auto-expand if there is exactly one sub-item
+        if (section && section.subs && section.subs.length === 1) {
+          return [id, section.subs[0].id];
+        }
+
+        return [id];
+      });
+    },
+    [t],
+  );
 
   const VerticalText = ({ color }) => (
     <div className="absolute right-0 top-0 bottom-0 px-8 flex items-center justify-center pointer-events-none">

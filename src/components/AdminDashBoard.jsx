@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { db, auth } from "../firebase";
 import {
   collection,
@@ -22,8 +22,8 @@ const AdminDashboard = ({ theme }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [activeTab, setActiveTab] = useState("web");
 
-  // Use a fallback theme if the prop is missing to prevent crashes
   const safeTheme = theme || { bg: "#000", text: "#fff" };
 
   useEffect(() => {
@@ -61,6 +61,16 @@ const AdminDashboard = ({ theme }) => {
       setLoginError("Invalid credentials");
     }
   };
+
+  // Filter logic for the three categories
+  const filteredInquiries = useMemo(() => {
+    return inquiries.filter((iq) => {
+      if (activeTab === "web") return !!iq.type; // Web forms have 'type'
+      if (activeTab === "streaming") return !!iq.streamType || !!iq.gear; // Streaming specific fields
+      if (activeTab === "general") return !iq.type && !iq.streamType; // Fallback for general contact
+      return true;
+    });
+  }, [inquiries, activeTab]);
 
   if (loading) return null;
 
@@ -118,51 +128,126 @@ const AdminDashboard = ({ theme }) => {
       style={{ backgroundColor: safeTheme.text, color: safeTheme.bg }}
     >
       <header
-        className="flex justify-between items-end mb-16 border-b pb-8"
+        className="flex justify-between items-end mb-12 border-b pb-8"
         style={{ borderColor: `${safeTheme.bg}22` }}
       >
         <div>
-          <h1 className="text-4xl font-bold tracking-tighter">Inquiries</h1>
+          <h1 className="text-4xl font-bold tracking-tighter">Dashboard</h1>
           <p className="text-[10px] opacity-50 tracking-[0.3em] mt-2">
-            {inquiries.length} TOTAL REQUESTS
+            {filteredInquiries.length} {activeTab.toUpperCase()} REQUESTS
           </p>
         </div>
         <button
           onClick={() => signOut(auth)}
-          className="text-[10px] font-bold tracking-[0.2em] border px-4 py-2 hover:bg-white hover:text-black"
+          className="text-[10px] font-bold tracking-[0.2em] border px-4 py-2 hover:bg-white hover:text-black transition-colors"
           style={{ borderColor: `${safeTheme.bg}44` }}
         >
           LOGOUT
         </button>
       </header>
 
-      <div className="grid grid-cols-1 gap-12">
-        {inquiries.map((iq) => (
-          <div
-            key={iq.id}
-            className="border-l-2 pl-8 py-2"
-            style={{ borderColor: `${safeTheme.bg}22` }}
+      {/* Tabs Navigation */}
+      <nav className="flex gap-8 mb-12">
+        {["web", "streaming", "general"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="text-[11px] font-bold tracking-[0.2em] pb-2 relative outline-none cursor-pointer"
+            style={{ opacity: activeTab === tab ? 1 : 0.3 }}
           >
-            <h2 className="text-2xl font-bold">{iq.contact}</h2>
-            <p className="text-[10px] opacity-50">
-              {iq.createdAt?.toDate().toLocaleString() || "Recent"}
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <DataBlock label="Type" value={iq.type} />
-              <DataBlock label="Tier" value={iq.selectedTier} />
-            </div>
-          </div>
+            {tab.toUpperCase()}
+            {activeTab === tab && (
+              <motion.div
+                layoutId="activeTab"
+                className="absolute bottom-0 left-0 right-0 h-0.5"
+                style={{ backgroundColor: safeTheme.bg }}
+              />
+            )}
+          </button>
         ))}
+      </nav>
+
+      <div className="grid grid-cols-1 gap-10">
+        <AnimatePresence mode="wait">
+          {filteredInquiries.length > 0 ? (
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-10"
+            >
+              {filteredInquiries.map((iq) => (
+                <div
+                  key={iq.id}
+                  className="border-l-2 pl-8 py-2 group"
+                  style={{ borderColor: `${safeTheme.bg}22` }}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="text-2xl font-bold">{iq.contact}</h2>
+                      <p className="text-[10px] opacity-50">
+                        {iq.createdAt?.toDate().toLocaleString() || "Recent"} —{" "}
+                        {iq.channel}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {/* Common Fields */}
+                    {iq.type && (
+                      <DataBlock label="Project Type" value={iq.type} />
+                    )}
+                    {iq.selectedTier && (
+                      <DataBlock label="Tier" value={iq.selectedTier} />
+                    )}
+                    {iq.pages && <DataBlock label="Pages" value={iq.pages} />}
+
+                    {/* Streaming Specific */}
+                    {iq.streamType && (
+                      <DataBlock label="Stream" value={iq.streamType} />
+                    )}
+                    {iq.location && (
+                      <DataBlock label="Location" value={iq.location} />
+                    )}
+
+                    {/* General/Message */}
+                    {iq.details && (
+                      <div className="col-span-2">
+                        <DataBlock label="Details" value={iq.details} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              className="text-xs italic"
+            >
+              No {activeTab} inquiries found.
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 };
 
-const DataBlock = ({ label, value }) => (
-  <div>
-    <p className="text-[9px] opacity-40 tracking-widest mb-1">{label}</p>
-    <p className="text-xs font-medium">{value}</p>
-  </div>
-);
+const DataBlock = ({ label, value }) => {
+  if (!value) return null;
+  return (
+    <div>
+      <p className="text-[9px] opacity-40 tracking-widest mb-1 uppercase">
+        {label}
+      </p>
+      <p className="text-xs font-medium">
+        {Array.isArray(value) ? value.join(", ") : value}
+      </p>
+    </div>
+  );
+};
 
 export default AdminDashboard;

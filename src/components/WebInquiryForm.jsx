@@ -72,8 +72,11 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
     }
   };
 
+  // Automatically select "1" page when Landing Page is chosen
   useEffect(() => {
-    if (formData.type === "landing") update("pages", "1-5");
+    if (formData.type === "landing") {
+      setFormData((prev) => ({ ...prev, pages: "1-5" }));
+    }
   }, [formData.type]);
 
   const calculatedTiers = useMemo(() => {
@@ -108,7 +111,17 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
 
   const update = (field, val) => {
     setShowError(false);
-    setFormData((prev) => ({ ...prev, [field]: val }));
+    setFormData((prev) => {
+      const isDeselecting = prev[field] === val;
+      const newValue = isDeselecting ? "" : val;
+
+      // Reset pages if landing is deselected
+      if (field === "type" && val === "landing" && isDeselecting) {
+        return { ...prev, [field]: "", pages: "" };
+      }
+
+      return { ...prev, [field]: newValue };
+    });
   };
 
   const handleNext = async () => {
@@ -122,10 +135,9 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
       }
 
       try {
-        // SAVE TO FIREBASE
         await addDoc(collection(db, "inquiries"), {
           ...formData,
-          calculatedTiers, // saving the estimated prices too
+          calculatedTiers,
           createdAt: serverTimestamp(),
         });
 
@@ -147,41 +159,55 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
     onClick,
     disabled = false,
     isCheck = false,
-  }) => (
-    <motion.button
-      type="button"
-      whileHover={
-        !disabled && !selected ? { backgroundColor: `${theme.bg}22` } : {}
-      }
-      transition={{ duration: 0.1 }}
-      onClick={disabled ? null : onClick}
-      className={`group flex flex-col w-full px-4 py-3 border mb-2 transition-all relative outline-none
+  }) => {
+    const supportsHover =
+      typeof window !== "undefined" &&
+      window.matchMedia("(hover: hover)").matches;
+
+    return (
+      <motion.button
+        type="button"
+        whileHover={
+          supportsHover && !disabled && !selected
+            ? { backgroundColor: `${theme.bg}11` }
+            : {}
+        }
+        whileTap={!disabled ? { scale: 0.98 } : {}}
+        transition={{ duration: 0.1 }}
+        onClick={(e) => {
+          if (disabled) return;
+          onClick();
+          e.currentTarget.blur();
+        }}
+        className={`group flex flex-col w-full px-4 py-3 border mb-2 transition-all relative outline-none
         ${disabled ? "cursor-not-allowed opacity-20" : "cursor-pointer"} 
-        ${selected ? "pointer-events-none" : ""} 
       `}
-      style={{
-        color: selected ? theme.text : theme.bg,
-        borderColor: selected ? theme.bg : `${theme.bg}44`,
-        backgroundColor: selected ? theme.bg : "transparent",
-      }}
-    >
-      <div className="flex items-center justify-between w-full relative z-10">
-        <span className="text-[11px] tracking-wider font-medium">{label}</span>
-        <div
-          className={`w-1.5 h-1.5 transition-colors duration-200 ${isCheck ? "rotate-45" : "rounded-full"}`}
-          style={{
-            backgroundColor: selected ? theme.text : "transparent",
-            border: `1px solid ${selected ? theme.text : theme.bg}`,
-          }}
-        />
-      </div>
-      {sublabel && (
-        <span className="text-[9px] mt-1 opacity-60 text-left relative z-10">
-          {sublabel}
-        </span>
-      )}
-    </motion.button>
-  );
+        style={{
+          color: selected ? theme.text : theme.bg,
+          borderColor: selected ? theme.bg : `${theme.bg}44`,
+          backgroundColor: selected ? theme.bg : "transparent",
+        }}
+      >
+        <div className="flex items-center justify-between w-full relative z-10">
+          <span className="text-[11px] tracking-wider font-medium">
+            {label}
+          </span>
+          <div
+            className={`w-1.5 h-1.5 transition-colors duration-200 ${isCheck ? "rotate-45" : "rounded-full"}`}
+            style={{
+              backgroundColor: selected ? theme.text : "transparent",
+              border: `1px solid ${selected ? theme.text : theme.bg}`,
+            }}
+          />
+        </div>
+        {sublabel && (
+          <span className="text-[9px] mt-1 opacity-60 text-left relative z-10">
+            {sublabel}
+          </span>
+        )}
+      </motion.button>
+    );
+  };
 
   return (
     <div className="w-full flex flex-col font-sans" style={{ color: theme.bg }}>
@@ -341,7 +367,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                                 <button
                                   key={num}
                                   onClick={() => update("extraLangs", num)}
-                                  className="px-4 py-2 border text-[10px]"
+                                  className="px-4 py-2 border text-[10px] cursor-pointer"
                                   style={{
                                     borderColor:
                                       formData.extraLangs === num
@@ -463,7 +489,10 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                               : {}
                           }
                           transition={{ duration: 0.1 }}
-                          onClick={() => update("selectedTier", tier)}
+                          onClick={(e) => {
+                            update("selectedTier", tier);
+                            e.currentTarget.blur();
+                          }}
                           className="w-full p-5 border text-left transition-all relative outline-none cursor-pointer"
                           style={{
                             borderWidth: tier === "premium" ? "1.5px" : "1px",
@@ -585,7 +614,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
                     setShowError(false);
                     setStep(step - 1);
                   }}
-                  className="group flex items-center cursor-pointer p-2 -ml-2 transition-transform active:scale-95"
+                  className="group flex items-center cursor-pointer p-2 -ml-2 transition-transform active:scale-95 outline-none"
                 >
                   <svg
                     width="24"
@@ -607,7 +636,7 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
               )}
               <button
                 onClick={handleNext}
-                className="group flex items-center gap-3 cursor-pointer transition-all active:scale-95"
+                className="group flex items-center gap-3 cursor-pointer transition-all active:scale-95 outline-none"
               >
                 {step === 6 && (
                   <span className="text-[10px] tracking-[0.2em] opacity-100">
