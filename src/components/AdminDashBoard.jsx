@@ -8,7 +8,7 @@ import {
   doc,
   deleteDoc,
 } from "firebase/firestore";
-import { signOut } from "firebase/auth";
+import { signOut } from "firebase/auth"; // Fixed this line
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import WebInquiryForm from "./WebInquiryForm";
@@ -23,7 +23,7 @@ const AdminDashboard = ({ theme }) => {
   const safeTheme = theme || { bg: "#000", text: "#fff" };
 
   useEffect(() => {
-    // Listen to Web Inquiries
+    // Listen to Web & General Inquiries (they share the 'inquiries' collection)
     const qWeb = query(
       collection(db, "inquiries"),
       orderBy("createdAt", "desc"),
@@ -47,7 +47,6 @@ const AdminDashboard = ({ theme }) => {
           ...doc.data(),
         }));
 
-        // Merge and sort both by date
         const combined = [...webData, ...streamData].sort(
           (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
         );
@@ -95,56 +94,72 @@ const AdminDashboard = ({ theme }) => {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* List Column */}
           <div className="lg:col-span-4 space-y-2">
-            {inquiries.map((iq) => (
-              <div
-                key={iq.id}
-                onClick={() => setSelectedInquiry(iq)}
-                className="group border p-4 cursor-pointer transition-all relative overflow-hidden"
-                style={{
-                  borderColor:
-                    selectedInquiry?.id === iq.id
-                      ? safeTheme.bg
-                      : `${safeTheme.bg}22`,
-                  backgroundColor:
-                    selectedInquiry?.id === iq.id
-                      ? `${safeTheme.bg}05`
-                      : "transparent",
-                }}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] font-bold tracking-widest uppercase">
-                    {iq.sourceCollection === "inquiries_stream"
-                      ? "STREAM"
-                      : iq.type || "WEB"}
-                  </span>
-                  <button
-                    onClick={(e) => handleDelete(iq.id, iq.sourceCollection, e)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border-none bg-transparent"
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
+            {inquiries.map((iq) => {
+              // LABEL LOGIC
+              let typeLabel = "WEB";
+              if (iq.sourceCollection === "inquiries_stream") {
+                typeLabel = "STREAM";
+              } else if (iq.formType === "general") {
+                typeLabel = "GENERAL";
+              }
+
+              return (
+                <div
+                  key={iq.id}
+                  onClick={() => setSelectedInquiry(iq)}
+                  className="group border p-4 cursor-pointer transition-all relative overflow-hidden"
+                  style={{
+                    borderColor:
+                      selectedInquiry?.id === iq.id
+                        ? safeTheme.bg
+                        : `${safeTheme.bg}22`,
+                    backgroundColor:
+                      selectedInquiry?.id === iq.id
+                        ? `${safeTheme.bg}05`
+                        : "transparent",
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[10px] font-bold tracking-widest uppercase">
+                      {typeLabel}
+                    </span>
+                    <button
+                      onClick={(e) =>
+                        handleDelete(iq.id, iq.sourceCollection, e)
+                      }
+                      className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border-none bg-transparent"
                     >
-                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                    </svg>
-                  </button>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="text-lg font-medium truncate">
+                    {iq.contact}
+                  </div>
+                  <div className="text-[9px] opacity-40 mt-1 uppercase">
+                    {iq.createdAt?.toDate().toLocaleDateString()} —{" "}
+                    {iq.sourceCollection === "inquiries_stream"
+                      ? `${iq.cameras} CAMS`
+                      : iq.formType === "general"
+                        ? "DIRECT MESSAGE"
+                        : iq.selectedTier}
+                  </div>
                 </div>
-                <div className="text-lg font-medium truncate">{iq.contact}</div>
-                <div className="text-[9px] opacity-40 mt-1 uppercase">
-                  {iq.createdAt?.toDate().toLocaleDateString()} —{" "}
-                  {iq.sourceCollection === "inquiries_stream"
-                    ? `${iq.cameras} CAMS`
-                    : iq.selectedTier}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
+          {/* Details Column */}
           <div
             className="lg:col-span-8 border p-6 md:p-12 relative"
             style={{ borderColor: `${safeTheme.bg}22` }}
@@ -169,6 +184,7 @@ const AdminDashboard = ({ theme }) => {
                     </span>
                   </div>
 
+                  {/* FORM SWITCHER */}
                   {selectedInquiry.sourceCollection === "inquiries_stream" ? (
                     <StreamInquiryForm
                       t={t}
