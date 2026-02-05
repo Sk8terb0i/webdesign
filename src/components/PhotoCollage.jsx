@@ -65,8 +65,8 @@ const PhotoCollage = ({ theme }) => {
 const PhotoItem = ({ src, index, zIndex, onPointerDown, theme, isMobile }) => {
   const [isActive, setIsActive] = useState(false);
 
-  const spreadX = isMobile ? 20 : 150;
-  const spreadY = isMobile ? 30 : 120;
+  const spreadX = isMobile ? 75 : 150;
+  const spreadY = isMobile ? 60 : 120;
 
   const dragLimitX = isMobile ? 20 : 350;
   const dragLimitY = isMobile ? 30 : 300;
