@@ -50,12 +50,8 @@ const NavSection = ({
             style={{ color: textColor }}
           >
             {subItems.map((sub) => {
-              if (
-                sub.type === "form" &&
-                typeof window !== "undefined" &&
-                window.innerWidth > 768
-              )
-                return null;
+              // REMOVED the logic that returned null for sub.type === "form" on desktop
+              // This allows the "Web Design Inquiry" label to appear in the list.
 
               const isSubOpen = openSections.includes(sub.id);
 
@@ -99,8 +95,10 @@ const NavSection = ({
                             ))}
                           </ul>
                         ) : sub.type === "form" ? (
-                          <div className="w-full relative mt-4">
-                            {/* MOBILE BACKGROUND RECTANGLE - FULL OPACITY */}
+                          // MODIFIED: Only render the inline form on mobile.
+                          // On desktop, the button exists but this content area stays empty
+                          // (since the form is in the fixed side panel).
+                          <div className="w-full relative mt-4 md:hidden">
                             <div
                               className="absolute inset-0 z-0"
                               style={{
@@ -108,7 +106,6 @@ const NavSection = ({
                                 backdropFilter: "blur(8px)",
                               }}
                             />
-
                             <div className="relative z-10 w-full flex justify-center py-12 px-6">
                               <div className="w-full max-w-md">
                                 <WebInquiryForm
@@ -116,6 +113,7 @@ const NavSection = ({
                                   t={t}
                                   theme={theme}
                                   hideHeading={true}
+                                  onSuccess={() => onToggleLevel1(id, [])}
                                 />
                               </div>
                             </div>

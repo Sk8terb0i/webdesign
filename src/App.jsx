@@ -208,7 +208,8 @@ const MainUIContent = React.memo(
         {/* desktop-only inquiry form panel */}
         <div className="hidden md:flex fixed inset-y-0 right-0 w-[66.6vw] pointer-events-none items-center justify-center z-40">
           <AnimatePresence>
-            {openSections.includes("web") && (
+            {/* CHANGED: Trigger based on the sub-item ID instead of the main section ID */}
+            {openSections.includes("web-inquiry") && (
               <motion.div
                 className="relative flex items-center justify-center h-full"
                 style={{ width: "30vw" }}
@@ -219,9 +220,8 @@ const MainUIContent = React.memo(
                 <div
                   className="absolute inset-y-0 inset-x-0 z-[-1] transition-colors duration-700"
                   style={{
-                    /* Adding 'dd' for ~85% opacity. Use 'cc' for 80% or 'aa' for 66% */
                     backgroundColor: `${theme.text}`,
-                    backdropFilter: "blur(8px)", // Optional: adds a nice glass effect to the background
+                    backdropFilter: "blur(8px)",
                   }}
                 />
                 <motion.div
@@ -237,6 +237,7 @@ const MainUIContent = React.memo(
                       t={t}
                       theme={theme}
                       hideHeading={false}
+                      onSuccess={() => setOpenSections([])}
                     />
                   </div>
                 </motion.div>
