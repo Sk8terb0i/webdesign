@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { db } from "../firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 // --- ADJUSTED PRICES ---
 const PRICING_CONFIG = {
@@ -109,9 +111,8 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
     setFormData((prev) => ({ ...prev, [field]: val }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 6) {
-      // Final Validation on Submit
       for (let i = 1; i <= 6; i++) {
         if (!isStepComplete(i)) {
           setStep(i);
@@ -119,8 +120,21 @@ const WebInquiryForm = ({ t, theme, hideHeading = false, onSuccess }) => {
           return;
         }
       }
-      setSubmitted(true);
-      setTimeout(() => onSuccess?.(), 2000);
+
+      try {
+        // SAVE TO FIREBASE
+        await addDoc(collection(db, "inquiries"), {
+          ...formData,
+          calculatedTiers, // saving the estimated prices too
+          createdAt: serverTimestamp(),
+        });
+
+        setSubmitted(true);
+        setTimeout(() => onSuccess?.(), 2000);
+      } catch (error) {
+        console.error("Error adding document: ", error);
+        alert("Something went wrong. Please try again.");
+      }
     } else {
       setStep(step + 1);
     }
