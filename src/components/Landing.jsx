@@ -309,6 +309,7 @@ const MainUIContent = React.memo(
                   textColor={textColor}
                   currentThemeName={theme.name}
                   tagline={t("tagline")}
+                  dragExploreLabel={t("drag_explore")}
                 />
               </motion.div>
             )}
@@ -428,12 +429,18 @@ function Landing() {
   return (
     <div
       ref={containerRef}
-      className={`min-h-screen w-full font-sans overflow-y-auto flex relative transition-colors duration-700 ${isDragging ? "cursor-grabbing" : "cursor-default"}`}
+      className={`min-h-screen w-full font-sans overflow-y-auto flex relative transition-colors duration-700 ${
+        isDragging ? "cursor-grabbing select-none" : "cursor-default"
+      }`}
       style={{
         backgroundColor: currentTheme.bg,
         "--mouse-x": "95%",
         "--mouse-y": "95%",
         touchAction: isDragging ? "none" : "auto",
+        // Add these to ensure no selection or callouts happen during drag
+        userSelect: isDragging ? "none" : "auto",
+        WebkitUserSelect: isDragging ? "none" : "auto",
+        WebkitTouchCallout: isDragging ? "none" : "none",
       }}
     >
       <div className="absolute inset-0 z-0">

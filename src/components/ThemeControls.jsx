@@ -1,24 +1,26 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const ThemeControls = ({
   themes,
   themeIndex,
   hoveredTheme,
   isExpanding,
-  onThemeMouseDown, // Changed prop name
+  onThemeMouseDown,
   onHover,
   textColor,
   currentThemeName,
   tagline,
+  dragExploreLabel, // Ensure this is passed from Landing.jsx: dragExploreLabel={t("drag_explore")}
 }) => (
   <footer className="flex justify-between items-end w-full mt-8 relative md:translate-y-4 z-20">
     <div
-      className="flex items-center text-[10px] md:text-sm font-extralight leading-none"
+      className="hidden md:flex items-center text-[10px] md:text-sm font-extralight leading-none"
       style={{ color: textColor }}
     >
       <span className="text-xl">—</span> &nbsp; {tagline}
     </div>
+
     <div className="flex gap-6 items-center">
       <span
         className="hidden md:block text-[10px] lowercase font-bold tracking-[0.2em] opacity-40 transition-colors duration-500"
@@ -26,7 +28,26 @@ const ThemeControls = ({
       >
         {currentThemeName}
       </span>
+
+      {/* Container for dots and mobile label */}
       <div className="flex flex-col md:flex-row gap-4 items-center absolute md:relative bottom-[2px] right-0 md:right-auto">
+        {/* Mobile Vertical Label */}
+        <AnimatePresence>
+          {hoveredTheme === null && (
+            <motion.span
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 0.4, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              // bottom-full places it above the dots container, mb-6 adds the gap
+              className="md:hidden absolute bottom-full mb-6 [writing-mode:vertical-lr] rotate-180 text-[9px] lowercase font-bold tracking-[0.2em] whitespace-nowrap transition-colors duration-500"
+              style={{ color: textColor }}
+            >
+              {dragExploreLabel}
+            </motion.span>
+          )}
+        </AnimatePresence>
+
+        {/* Theme Dots */}
         {themes.map((tItem, idx) => {
           const isActive = themeIndex === idx;
           const isHovered = hoveredTheme === idx;
@@ -40,7 +61,6 @@ const ThemeControls = ({
           return (
             <button
               key={tItem.name}
-              // Switch to onMouseDown to enable dragging
               onPointerDown={(e) => onThemeMouseDown(idx, e)}
               onMouseEnter={() => onHover(idx)}
               onMouseLeave={() => onHover(null)}
