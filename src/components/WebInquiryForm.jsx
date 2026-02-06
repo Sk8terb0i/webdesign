@@ -367,7 +367,6 @@ const WebInquiryForm = ({
                   </motion.section>
                 )}
 
-                {/* Rest of the steps remain unchanged... */}
                 {step === 2 && (
                   <motion.section
                     key="s2"
