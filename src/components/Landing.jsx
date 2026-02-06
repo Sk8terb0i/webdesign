@@ -392,10 +392,20 @@ function Landing() {
         const sections = getSectionsData(t, isEn);
         const section = sections.find((s) => s.id === id);
 
-        // If the section exists and has sub-items, open the parent AND all sub-items immediately
         if (section && section.subs && section.subs.length > 0) {
-          const subIds = section.subs.map((sub) => sub.id);
-          return [id, ...subIds];
+          // Logic for About and Contact: Open every sub-item
+          if (id === "about" || id === "contact") {
+            const subIds = section.subs.map((sub) => sub.id);
+            return [id, ...subIds];
+          }
+
+          // Logic for Web and Stream: Only auto-expand the inquiry sub-item
+          const inquirySub = section.subs.find((sub) =>
+            sub.id.includes("inquiry"),
+          );
+          if (inquirySub) {
+            return [id, inquirySub.id];
+          }
         }
 
         return [id];
