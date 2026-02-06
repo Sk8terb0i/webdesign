@@ -36,6 +36,5 @@
     color: var(--color-text);
     -webkit-font-smoothing: antialiased;
     /* Ensure the scrollbar doesn't ruin the no-scroll look */
-    overflow: hidden; 
   }
 }
