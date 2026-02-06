@@ -62,7 +62,7 @@ function App() {
         <meta property="og:description" content={t("about_text")} />
         <meta
           property="og:image"
-          content="https://www.streaming-web.design/og-image.jpg"
+          content="https://www.streaming-web.design/faveicon.svg"
         />
 
         {/* 4. Twitter Meta Tags */}
@@ -71,7 +71,7 @@ function App() {
         <meta name="twitter:description" content={t("about_text")} />
         <meta
           name="twitter:image"
-          content="https://www.streaming-web.design/og-image.jpg"
+          content="https://www.streaming-web.design/faveicon.svg"
         />
 
         {/* 5. JSON-LD Schema */}
