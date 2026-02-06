@@ -6,7 +6,7 @@ const resources = {
   en: {
     translation: {
       // --- General UI ---
-      brand: "Arnold Web & Streaming",
+      brand: "Eon Web & Streaming",
       tagline: "A simple, good looking solution without any monthly costs",
       verticalText: "Modern. Simple. Yours.",
       drag_explore: "Drag to explore",
@@ -59,7 +59,6 @@ const resources = {
         "Your inquiry has been sent. I will get back to you soon.",
       form_error_required: "Please complete all required steps first.",
       get_in_touch_out: "How can I reach you?",
-      contact_email: "noe.arnold@outlook.com",
 
       // --- Web Inquiry Form ---
       form_title_web: "Inquiry Web Design",
@@ -154,7 +153,7 @@ const resources = {
   de: {
     translation: {
       // --- General UI ---
-      brand: "Arnold Web & Streaming",
+      brand: "Eon Web & Streaming",
       tagline: "Eine einfache, gut aussehende Lösung ohne monatliche Kosten",
       verticalText: "Modern. Einfach. Deins.",
       drag_explore: "Maus gedrückt halten und erkunden",
@@ -204,7 +203,6 @@ const resources = {
       form_error_required:
         "Bitte fülle zuerst alle erforderlichen Schritte aus.",
       get_in_touch_out: "Wie erreiche ich dich?",
-      contact_email: "noe.arnold@outlook.com",
 
       // --- Web Inquiry Form ---
       form_title_web: "Offertenanfrage Webdesign",
