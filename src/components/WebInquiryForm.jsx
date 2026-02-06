@@ -603,11 +603,6 @@ const WebInquiryForm = ({
                               <span className="text-[10px] tracking-widest font-bold">
                                 {t(`level_${tier}`)}
                               </span>
-                              <span className="text-[9px] opacity-60 mt-0.5">
-                                {tier === "premium"
-                                  ? t("recommended_path")
-                                  : ""}
-                              </span>
                             </div>
                             <span className="text-xl font-bold">
                               CHF {calculatedTiers[i].toLocaleString()}
