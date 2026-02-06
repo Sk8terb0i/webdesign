@@ -22,7 +22,7 @@ const resources = {
 
       // --- About Section ---
       about_text:
-        "I am a web designer and streaming technician based in Switzerland, focused on clean, high-performance solutions without the headache of monthly subscriptions.",
+        "I am Noe Arnold, a web designer and streaming technician based in Switzerland, focused on clean, high-performance solutions without the headache of monthly subscriptions.",
 
       // --- Technical Lists ---
       web_technical: "Technical",
@@ -169,7 +169,7 @@ const resources = {
 
       // --- About Section ---
       about_text:
-        "Ich bin Webdesigner und Streaming-Techniker aus der Schweiz, spezialisiert auf performante Lösungen ohne monatliche Abonnements.",
+        "Ich bin Noe Arnold ein Webdesigner und Streaming-Techniker aus der Schweiz, spezialisiert auf performante Lösungen ohne monatliche Abonnements.",
 
       // --- Technical Lists ---
       web_technical: "Technisches",

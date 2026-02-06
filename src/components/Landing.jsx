@@ -384,6 +384,34 @@ function Landing() {
     };
   }, [isDragging, hoveredTheme, finalizeTheme, updateCursor]);
 
+  useEffect(() => {
+    const updateFavicon = async () => {
+      const link = document.querySelector("link[rel='icon']");
+      if (!link) return;
+
+      try {
+        // Fetch the SVG from your public folder
+        const response = await fetch("/favicon.svg");
+        let svgText = await response.text();
+
+        // Replace 'currentColor' with the actual hex code from your theme
+        // currentTheme.text comes from your themes array
+        const colorizedSvg = svgText.replace(
+          /currentColor/g,
+          currentTheme.text,
+        );
+
+        // Convert to a base64 data URL
+        const svgBase64 = window.btoa(colorizedSvg);
+        link.href = `data:image/svg+xml;base64,${svgBase64}`;
+      } catch (error) {
+        console.error("Error updating favicon:", error);
+      }
+    };
+
+    updateFavicon();
+  }, [currentTheme]);
+
   const handleLevel1Toggle = useCallback(
     (id) => {
       setOpenSections((prev) => {
