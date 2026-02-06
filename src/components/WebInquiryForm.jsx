@@ -3,14 +3,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { db } from "../firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-// --- ADJUSTED PRICES ---
+// --- UPDATED PRICING CONFIG ---
 const PRICING_CONFIG = {
   base: {
-    landing: [500, 1300, 2000],
-    new: [2000, 3500, 4500],
-    redesign: [1500, 3500, 6000],
+    // [Basic, Premium, Horse]
+    new: [2000, 3000, 4500],
+    redesign: [1200, 1800, 2800],
+    landing: [600, 900, 1500],
   },
-  pageRate: [100, 100, 100],
+  // Per-page rates based on type
+  rates: {
+    new: 200,
+    redesign: 120,
+    landing: 0,
+  },
   features: {
     shop_c: [1500, 2250, 3000],
     shop_e: [800, 1400, 2000],
@@ -41,8 +47,8 @@ const WebInquiryForm = ({
 
   const [formData, setFormData] = useState(
     readOnlyData || {
-      type: "",
-      pages: "",
+      type: "new",
+      pages: "2-5",
       features: [],
       extraLangs: 0,
       needsTranslation: false,
@@ -57,11 +63,42 @@ const WebInquiryForm = ({
     },
   );
 
+  const formatRange = (range) => {
+    if (!range || !Array.isArray(range)) return `(free)`;
+    return `chf ${range[0].toLocaleString()} - ${range[2].toLocaleString()}`;
+  };
+
+  // --- CALCULATES FULL PRICE FOR PAGE BUTTON LABELS ---
+  const getPageRange = (p) => {
+    if (!formData.type) return "select type first";
+
+    const rate = PRICING_CONFIG.rates[formData.type];
+    const baseRange = PRICING_CONFIG.base[formData.type];
+
+    // Define min/max multipliers for the ranges
+    const bounds = {
+      "2-5": { min: 2, max: 5 },
+      "5-10": { min: 5, max: 10 },
+      "10+": { min: 10, max: 20 },
+    };
+
+    if (formData.type === "landing") {
+      return `chf ${baseRange[0].toLocaleString()} - ${baseRange[2].toLocaleString()}`;
+    }
+
+    const b = bounds[p] || { min: 0, max: 0 };
+    const minTotal = baseRange[0] + rate * b.min;
+    const maxTotal = baseRange[2] + rate * b.max;
+
+    return `chf ${minTotal.toLocaleString()} - ${maxTotal.toLocaleString()}`;
+  };
+
   const isStepComplete = (stepNumber) => {
     switch (stepNumber) {
       case 1:
         return !!(formData.type && formData.pages);
       case 2:
+        // If the 'lang' feature is selected, they must pick at least 1 extra language
         return formData.features.includes("lang")
           ? formData.extraLangs > 0
           : true;
@@ -87,36 +124,41 @@ const WebInquiryForm = ({
 
   useEffect(() => {
     if (formData.type === "landing" && !readOnlyData) {
-      setFormData((prev) => ({ ...prev, pages: "1-5" }));
+      setFormData((prev) => ({ ...prev, pages: "2-5" }));
     }
   }, [formData.type, readOnlyData]);
 
+  // --- UPDATED CALCULATION LOGIC ---
   const calculatedTiers = useMemo(() => {
     if (!formData.type) return [0, 0, 0];
+
+    const rate = PRICING_CONFIG.rates[formData.type];
+
     return [0, 1, 2].map((idx) => {
       let total = PRICING_CONFIG.base[formData.type][idx];
-      if (formData.type === "landing") {
-        total += PRICING_CONFIG.pageRate[idx] * 1;
-      } else {
-        if (formData.pages === "1-5")
-          total += PRICING_CONFIG.pageRate[idx] * 2.5;
-        if (formData.pages === "5-10")
-          total += PRICING_CONFIG.pageRate[idx] * 7.5;
-        if (formData.pages === "10+")
-          total += PRICING_CONFIG.pageRate[idx] * 12;
+
+      // Page additions
+      if (formData.type !== "landing") {
+        const multipliers = { "2-5": 3.5, "5-10": 7.5, "10+": 15 };
+        total += rate * (multipliers[formData.pages] || 0);
       }
+
+      // Feature additions
       formData.features.forEach((f) => {
         if (PRICING_CONFIG.features[f])
           total += PRICING_CONFIG.features[f][idx];
       });
+
       if (formData.features.includes("lang")) {
         const perLangCost =
           PRICING_CONFIG.language.technical +
           (formData.needsTranslation ? PRICING_CONFIG.language.translation : 0);
         total += (formData.extraLangs || 0) * perLangCost;
       }
+
       if (formData.assets === "need") total += PRICING_CONFIG.assets[idx];
       if (formData.copy === "need") total += PRICING_CONFIG.copy[idx];
+
       return total;
     });
   }, [formData]);
@@ -127,11 +169,9 @@ const WebInquiryForm = ({
     setFormData((prev) => {
       const isDeselecting = prev[field] === val;
       const newValue = isDeselecting ? "" : val;
-
       if (field === "type" && val === "landing" && isDeselecting) {
         return { ...prev, [field]: "", pages: "" };
       }
-
       return { ...prev, [field]: newValue };
     });
   };
@@ -146,14 +186,12 @@ const WebInquiryForm = ({
           return;
         }
       }
-
       try {
         await addDoc(collection(db, "inquiries"), {
           ...formData,
           calculatedTiers,
           createdAt: serverTimestamp(),
         });
-
         setSubmitted(true);
         setTimeout(() => onSuccess?.(), 2000);
       } catch (error) {
@@ -297,40 +335,39 @@ const WebInquiryForm = ({
                       <Choice
                         key={type}
                         label={t(`form_scope_${type}`)}
+                        sublabel=""
                         selected={formData.type === type}
                         onClick={() => update("type", type)}
                       />
                     ))}
-                    {formData.type === "landing" && (
-                      <p
-                        className="text-[9px] mt-2 opacity-70 leading-relaxed italic border-l-2 pl-3"
-                        style={{ borderColor: safeTheme.bg }}
-                      >
-                        {t("form_scope_landing_note")}
-                      </p>
-                    )}
+
                     <div className="mt-8">
                       <h3 className="text-[10px] tracking-widest mb-1 opacity-70">
                         {t("form_pages_label")}
                       </h3>
-                      <p className="text-[9px] mb-4 opacity-50 italic">
-                        {t("form_pages_hint")}
-                      </p>
-                      {["1-5", "5-10", "10+"].map((p) => (
-                        <Choice
-                          key={p}
-                          label={
-                            p === "1-5" && formData.type === "landing" ? "1" : p
-                          }
-                          selected={formData.pages === p}
-                          onClick={() => update("pages", p)}
-                          disabled={formData.type === "landing" && p !== "1-5"}
-                        />
-                      ))}
+                      {["2-5", "5-10", "10+"].map((p) => {
+                        if (formData.type === "landing" && p !== "2-5")
+                          return null;
+                        return (
+                          <Choice
+                            key={p}
+                            label={
+                              p === "2-5" && formData.type === "landing"
+                                ? "1"
+                                : p
+                            }
+                            sublabel={getPageRange(p)}
+                            selected={formData.pages === p}
+                            onClick={() => update("pages", p)}
+                            disabled={!formData.type}
+                          />
+                        );
+                      })}
                     </div>
                   </motion.section>
                 )}
 
+                {/* Rest of the steps remain unchanged... */}
                 {step === 2 && (
                   <motion.section
                     key="s2"
@@ -345,6 +382,7 @@ const WebInquiryForm = ({
                         key={f}
                         isCheck
                         label={t(`form_feat_${f}`)}
+                        sublabel={formatRange(PRICING_CONFIG.features[f])}
                         selected={formData.features?.includes(f)}
                         onClick={() => {
                           const next = formData.features.includes(f)
@@ -354,6 +392,7 @@ const WebInquiryForm = ({
                         }}
                       />
                     ))}
+
                     <div
                       className="mt-4 border-t pt-4"
                       style={{ borderColor: `${safeTheme.bg}22` }}
@@ -361,7 +400,6 @@ const WebInquiryForm = ({
                       <Choice
                         isCheck
                         label={t("form_feat_lang")}
-                        sublabel={t("form_feat_lang_desc")}
                         selected={formData.features?.includes("lang")}
                         onClick={() => {
                           const next = formData.features.includes("lang")
@@ -370,6 +408,7 @@ const WebInquiryForm = ({
                           update("features", next);
                         }}
                       />
+
                       {formData.features?.includes("lang") && (
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
@@ -386,9 +425,9 @@ const WebInquiryForm = ({
                               {[1, 2, 3].map((num) => (
                                 <button
                                   key={num}
-                                  type="button" // Always specify type for buttons inside forms
+                                  type="button"
                                   onClick={() => update("extraLangs", num)}
-                                  className={`px-4 py-2 border text-[10px] transition-colors ${readOnlyData ? "cursor-default" : "cursor-pointer"}`}
+                                  className={`flex flex-col items-center justify-center min-w-[60px] py-2 border transition-colors ${readOnlyData ? "cursor-default" : "cursor-pointer"}`}
                                   style={{
                                     borderColor:
                                       formData.extraLangs === num
@@ -409,7 +448,14 @@ const WebInquiryForm = ({
                                         : 1,
                                   }}
                                 >
-                                  +{num}
+                                  <span className="text-[10px] font-bold">
+                                    +{num}
+                                  </span>
+                                  {/* Price shown here for the technical setup of that amount */}
+                                  <span className="text-[7px] opacity-70">
+                                    chf{" "}
+                                    {num * PRICING_CONFIG.language.technical}
+                                  </span>
                                 </button>
                               ))}
                             </div>
@@ -421,11 +467,14 @@ const WebInquiryForm = ({
                             </p>
                             <Choice
                               label={t("form_lang_service_yes")}
+                              // Price for translation based on amount picked above
+                              sublabel={`chf ${(formData.extraLangs || 1) * PRICING_CONFIG.language.translation}`}
                               selected={formData.needsTranslation}
                               onClick={() => update("needsTranslation", true)}
                             />
                             <Choice
                               label={t("form_lang_service_no")}
+                              sublabel="(free)"
                               selected={!formData.needsTranslation}
                               onClick={() => update("needsTranslation", false)}
                             />
@@ -448,22 +497,26 @@ const WebInquiryForm = ({
                     <div className="mb-6">
                       <Choice
                         label={t("form_assets_ready")}
+                        sublabel="(free)"
                         selected={formData.assets === "ready"}
                         onClick={() => update("assets", "ready")}
                       />
                       <Choice
                         label={t("form_assets_need")}
+                        sublabel={formatRange(PRICING_CONFIG.assets)}
                         selected={formData.assets === "need"}
                         onClick={() => update("assets", "need")}
                       />
                     </div>
                     <Choice
                       label={t("form_copy_provide")}
+                      sublabel="(free)"
                       selected={formData.copy === "provide"}
                       onClick={() => update("copy", "provide")}
                     />
                     <Choice
                       label={t("form_copy_need")}
+                      sublabel={formatRange(PRICING_CONFIG.copy)}
                       selected={formData.copy === "need"}
                       onClick={() => update("copy", "need")}
                     />
@@ -481,11 +534,13 @@ const WebInquiryForm = ({
                     </h3>
                     <Choice
                       label={t("form_host_free")}
+                      sublabel="(free)"
                       selected={formData.hosting === "github"}
                       onClick={() => update("hosting", "github")}
                     />
                     <Choice
                       label={t("form_host_ext")}
+                      sublabel="(free)"
                       selected={formData.hosting === "external"}
                       onClick={() => update("hosting", "external")}
                     />

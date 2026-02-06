@@ -84,7 +84,6 @@ const StreamInquiryForm = ({
     if (isAdmin) return;
     setShowError(false);
     setFormData((prev) => {
-      // Only toggle (reset) if it's a selection field, NOT a text input
       const isTextField = field === "contact" || field === "details";
       const shouldToggle = !isTextField && prev[field] === val;
 
@@ -135,7 +134,6 @@ const StreamInquiryForm = ({
     disabled = false,
     isCheck = false,
   }) => {
-    // Check if the device actually supports hover to prevent "sticky" states
     const supportsHover =
       typeof window !== "undefined" &&
       window.matchMedia("(hover: hover)").matches;
@@ -145,19 +143,16 @@ const StreamInquiryForm = ({
     return (
       <motion.button
         type="button"
-        // Only apply hover if supported AND not selected
         whileHover={
           supportsHover && !isInteractionDisabled && !selected
             ? { backgroundColor: `${theme.bg}11` }
             : {}
         }
-        // Feedback for the actual click/tap
         whileTap={!isInteractionDisabled ? { scale: 0.98 } : {}}
         transition={{ duration: 0.1 }}
         onClick={(e) => {
           if (isInteractionDisabled) return;
           onClick();
-          // Blur the element so it doesn't keep "focus" styles/hover state
           e.currentTarget.blur();
         }}
         className={`group flex flex-col w-full px-4 py-3 border mb-2 transition-all relative outline-none
@@ -263,7 +258,7 @@ const StreamInquiryForm = ({
                           <button
                             key={n}
                             onClick={() => update("days", n)}
-                            className={`px-5 py-2 border text-[10px] ${isAdmin ? "cursor-default" : ""}`}
+                            className={`flex flex-col items-center justify-center px-5 py-2 border transition-colors ${isAdmin ? "cursor-default" : "cursor-pointer"}`}
                             style={{
                               backgroundColor:
                                 formData.days === n ? theme.bg : "transparent",
@@ -273,7 +268,12 @@ const StreamInquiryForm = ({
                               opacity: isAdmin && formData.days !== n ? 0.3 : 1,
                             }}
                           >
-                            {n}
+                            <span className="text-[10px] font-bold">{n}</span>
+                            <span className="text-[7px] opacity-70">
+                              chf{" "}
+                              {STREAM_CONFIG.dayBase +
+                                (n - 1) * STREAM_CONFIG.dayExtra}
+                            </span>
                           </button>
                         ))}
                       </div>
@@ -287,7 +287,7 @@ const StreamInquiryForm = ({
                           <button
                             key={n}
                             onClick={() => update("cameras", n)}
-                            className={`flex-1 py-3 border text-[10px] ${isAdmin ? "cursor-default" : ""}`}
+                            className={`flex-1 flex flex-col items-center justify-center py-3 border transition-colors ${isAdmin ? "cursor-default" : "cursor-pointer"}`}
                             style={{
                               backgroundColor:
                                 formData.cameras === n
@@ -300,7 +300,12 @@ const StreamInquiryForm = ({
                                 isAdmin && formData.cameras !== n ? 0.3 : 1,
                             }}
                           >
-                            {n}
+                            <span className="text-[10px] font-bold">{n}</span>
+                            <span className="text-[7px] opacity-70">
+                              chf{" "}
+                              {STREAM_CONFIG.camBase +
+                                (n - 1) * STREAM_CONFIG.camExtra}
+                            </span>
                           </button>
                         ))}
                       </div>
@@ -309,7 +314,8 @@ const StreamInquiryForm = ({
                           className="text-[9px] italic opacity-70 border-l-2 pl-3"
                           style={{ borderColor: theme.bg }}
                         >
-                          {t("form_stream_cams_hint")}
+                          {t("form_stream_cams_hint")} (+ chf{" "}
+                          {STREAM_CONFIG.assistantFlat})
                         </p>
                       )}
                     </div>
@@ -327,11 +333,13 @@ const StreamInquiryForm = ({
                     </h3>
                     <Choice
                       label={t("form_stream_type_local")}
+                      sublabel={`chf ${STREAM_CONFIG.typeRates.local}`}
                       selected={formData.type === "local"}
                       onClick={() => update("type", "local")}
                     />
                     <Choice
                       label={t("form_stream_type_remote")}
+                      sublabel={`chf ${STREAM_CONFIG.typeRates.remote}`}
                       selected={formData.type === "remote"}
                       onClick={() => update("type", "remote")}
                     />
@@ -341,11 +349,13 @@ const StreamInquiryForm = ({
                       </p>
                       <Choice
                         label={t("form_stream_dest_single")}
+                        sublabel={`chf ${STREAM_CONFIG.platformBase}`}
                         selected={formData.platforms === 1}
                         onClick={() => update("platforms", 1)}
                       />
                       <Choice
                         label={t("form_stream_dest_multi")}
+                        sublabel="Multi-platform streaming"
                         selected={formData.platforms > 1}
                         onClick={() => update("platforms", 2)}
                       />
@@ -364,7 +374,7 @@ const StreamInquiryForm = ({
                               <button
                                 key={n}
                                 onClick={() => update("platforms", n)}
-                                className={`px-4 py-2 border text-[10px] ${isAdmin ? "cursor-default" : ""}`}
+                                className={`flex flex-col items-center justify-center px-4 py-2 border transition-colors ${isAdmin ? "cursor-default" : "cursor-pointer"}`}
                                 style={{
                                   backgroundColor:
                                     formData.platforms === n
@@ -381,7 +391,14 @@ const StreamInquiryForm = ({
                                       : 1,
                                 }}
                               >
-                                {n}
+                                <span className="text-[10px] font-bold">
+                                  {n}
+                                </span>
+                                <span className="text-[7px] opacity-70">
+                                  chf{" "}
+                                  {STREAM_CONFIG.platformBase +
+                                    (n - 1) * STREAM_CONFIG.platformExtra}
+                                </span>
                               </button>
                             ))}
                           </div>
@@ -405,11 +422,13 @@ const StreamInquiryForm = ({
                     </p>
                     <Choice
                       label={t("form_stream_rec_none")}
+                      sublabel="(free)"
                       selected={formData.recording === "none"}
                       onClick={() => update("recording", "none")}
                     />
                     <Choice
                       label={t("form_stream_rec_local")}
+                      sublabel={`chf ${STREAM_CONFIG.recordingLocal}`}
                       selected={formData.recording === "local"}
                       onClick={() => update("recording", "local")}
                     />
@@ -420,6 +439,11 @@ const StreamInquiryForm = ({
                       <Choice
                         key={lvl}
                         label={t(`form_stream_overlay_${lvl}`)}
+                        sublabel={
+                          STREAM_CONFIG.overlayRates[lvl] > 0
+                            ? `chf ${STREAM_CONFIG.overlayRates[lvl]}`
+                            : "(free)"
+                        }
                         selected={formData.overlays === lvl}
                         onClick={() => update("overlays", lvl)}
                       />
