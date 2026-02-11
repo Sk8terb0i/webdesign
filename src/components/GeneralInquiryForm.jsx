@@ -9,6 +9,7 @@ const GeneralInquiryForm = ({ t, theme, onSuccess, data = null }) => {
   const [showError, setShowError] = useState(false);
 
   const [formData, setFormData] = useState({
+    name: data?.name || "", // Added name field
     message: data?.message || "",
     contact: data?.contact || "",
     channel: data?.channel || "",
@@ -33,12 +34,13 @@ const GeneralInquiryForm = ({ t, theme, onSuccess, data = null }) => {
 
     if (step === 2) {
       if (isAdmin) return;
+      const hasName = !!formData.name && formData.name.trim() !== ""; // Name validation
       const hasMessage = !!formData.message && formData.message.trim() !== "";
       const hasContact = !!formData.contact && !!formData.channel;
       const chatValid =
         formData.channel === "chat" ? !!formData.messagingApp : true;
 
-      if (!hasMessage || !hasContact || !chatValid) {
+      if (!hasName || !hasMessage || !hasContact || !chatValid) {
         setShowError(true);
         return;
       }
@@ -122,7 +124,9 @@ const GeneralInquiryForm = ({ t, theme, onSuccess, data = null }) => {
           <motion.div key="form-container">
             <header className="mb-8">
               <h2 className="text-2xl font-bold tracking-tighter mb-2">
-                {isAdmin ? `INQUIRY: ${formData.contact}` : t("contact_me")}
+                {isAdmin
+                  ? `INQUIRY: ${formData.name || formData.contact}`
+                  : t("contact_me")}
               </h2>
               <div className="flex gap-1 mt-4">
                 {[1, 2].map((s) => (
@@ -175,16 +179,37 @@ const GeneralInquiryForm = ({ t, theme, onSuccess, data = null }) => {
                     <h3 className="text-sm font-bold tracking-tighter mb-6">
                       {t("get_in_touch")}
                     </h3>
+
+                    {/* Name Field */}
+                    <input
+                      readOnly={isAdmin}
+                      placeholder={t("form_name_label") || "Name"}
+                      className={`w-full border-b bg-transparent py-4 text-lg outline-none mb-4 ${isAdmin ? "cursor-default" : "cursor-text"}`}
+                      style={{
+                        borderColor:
+                          showError && !formData.name
+                            ? theme.bg
+                            : `${theme.bg}44`,
+                      }}
+                      value={formData.name}
+                      onChange={(e) => update("name", e.target.value)}
+                    />
+
+                    {/* Contact Field */}
                     <input
                       readOnly={isAdmin}
                       placeholder={t("form_contact_placeholder")}
                       className={`w-full border-b bg-transparent py-4 text-lg outline-none mb-6 ${isAdmin ? "cursor-default" : "cursor-text"}`}
                       style={{
-                        borderColor: theme.bg,
+                        borderColor:
+                          showError && !formData.contact
+                            ? theme.bg
+                            : `${theme.bg}44`,
                       }}
                       value={formData.contact}
                       onChange={(e) => update("contact", e.target.value)}
                     />
+
                     {["email", "call", "chat"].map((ch) => (
                       <Choice
                         key={ch}

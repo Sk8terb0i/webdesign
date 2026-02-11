@@ -47,6 +47,7 @@ const WebInquiryForm = ({
 
   const [formData, setFormData] = useState(
     readOnlyData || {
+      name: "",
       type: "new",
       pages: "2-5",
       features: [],
@@ -109,7 +110,8 @@ const WebInquiryForm = ({
       case 5:
         return !!formData.selectedTier;
       case 6:
-        const hasContact = !!formData.contact && !!formData.channel;
+        const hasContact =
+          !!formData.name && !!formData.contact && !!formData.channel;
         return formData.channel === "chat"
           ? hasContact && !!formData.messagingApp
           : hasContact;
@@ -626,6 +628,14 @@ const WebInquiryForm = ({
                     <h3 className="text-sm font-bold tracking-tighter mb-6">
                       {t("get_in_touch_out")}
                     </h3>
+                    <input
+                      readOnly={!!readOnlyData}
+                      value={formData.name}
+                      placeholder={t("form_name_label")}
+                      className="w-full border-b bg-transparent py-4 text-lg outline-none mb-6"
+                      style={{ borderColor: safeTheme.bg }}
+                      onChange={(e) => update("name", e.target.value)}
+                    />
                     <input
                       readOnly={!!readOnlyData}
                       value={formData.contact}

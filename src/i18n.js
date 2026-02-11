@@ -48,6 +48,7 @@ const resources = {
       // --- Common Form Elements ---
       form_subtitle:
         "tell me a bit about your idea so we can start a conversation.",
+      form_name_label: "Name",
       form_contact_placeholder: "Email address or phone number",
       form_channel_chat: "Messaging app",
       form_channel_email: "Email",
@@ -104,7 +105,7 @@ const resources = {
       recommended_path: "Best balance of performance & design",
       select_this_plan: "Select this plan",
       free_consultation_note:
-        "The first consultation is completely free and non-binding.",
+        "The initial consultation is free if you book the project; otherwise, it is billed at 100 CHF/hour.",
       form_price_disclaimer:
         "This is a non-binding estimate. Final pricing is determined after our initial consultation.",
 
@@ -191,6 +192,7 @@ const resources = {
 
       // --- Common Form Elements ---
       form_subtitle: "erzähl mir ein wenig von deiner Idee.",
+      form_name_label: "Name",
       form_contact_placeholder: "E-Mail-Adresse oder Telefonnummer",
       form_channel_chat: "Messenger App",
       form_channel_email: "E-Mail",
@@ -249,7 +251,7 @@ const resources = {
       recommended_path: "Beste Balance zwischen Leistung & Design",
       select_this_plan: "Diesen Plan wählen",
       free_consultation_note:
-        "Das Erstgespräch ist völlig kostenlos und unverbindlich.",
+        "Das Erstgespräch ist bei einer Auftragserteilung kostenlos, ansonsten wird es mit 100 CHF/Std. verrechnet.",
       form_price_disclaimer:
         "Dies ist eine unverbindliche Schätzung. Der endgültige Preis wird nach unserem Gespräch festgelegt.",
 

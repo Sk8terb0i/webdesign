@@ -56,7 +56,8 @@ const AdminDashboard = ({ theme }) => {
   useEffect(() => {
     if (selectedInquiry) {
       setClientInfo({
-        name: selectedInquiry.contact || "",
+        // Priority: Saved Name -> Contact Info -> Empty String
+        name: selectedInquiry.name || selectedInquiry.contact || "",
         address: selectedInquiry.address || "",
       });
       setExactPageCount(
@@ -146,12 +147,10 @@ const AdminDashboard = ({ theme }) => {
 
     const t = i18n[lang];
 
-    // Page Styling
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.text(t.title, 14, 25);
 
-    // Header Details
     doc.setFontSize(10);
     doc.text(t.between, 14, 40);
     doc.setFont("helvetica", "normal");
@@ -190,7 +189,6 @@ const AdminDashboard = ({ theme }) => {
       grandTotal += pageCost;
     }
 
-    // Features
     iq.features.forEach((f) => {
       if (PRICING_CONFIG.features[f]) {
         const cost = PRICING_CONFIG.features[f][tierIdx];
@@ -285,9 +283,12 @@ const AdminDashboard = ({ theme }) => {
                       : "transparent",
                 }}
               >
-                <div className="text-sm font-bold truncate">{iq.contact}</div>
+                {/* Prioritize Name in sidebar */}
+                <div className="text-sm font-bold truncate">
+                  {iq.name || iq.contact}
+                </div>
                 <div className="text-[9px] opacity-40 uppercase">
-                  {iq.type} — {iq.language}
+                  {iq.name ? iq.contact : `${iq.type} — ${iq.language}`}
                 </div>
               </div>
             ))}
@@ -304,7 +305,7 @@ const AdminDashboard = ({ theme }) => {
                   <WebInquiryForm
                     t={t}
                     theme={safeTheme}
-                    readOnlyData={selectedInquiry}
+                    data={selectedInquiry} // Uses the shared data prop for read-only view
                     hideHeading={true}
                   />
                 </div>

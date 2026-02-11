@@ -30,6 +30,7 @@ const StreamInquiryForm = ({
   const [showError, setShowError] = useState(false);
 
   const [formData, setFormData] = useState({
+    name: data?.name || "",
     days: data?.days || 1,
     cameras: data?.cameras || 1,
     type: data?.type || "local",
@@ -54,7 +55,8 @@ const StreamInquiryForm = ({
       case 3:
         return !!(formData.recording && formData.overlays);
       case 4:
-        const hasContact = !!formData.contact && !!formData.channel;
+        const hasContact =
+          !!formData.name && !!formData.contact && !!formData.channel;
         return formData.channel === "chat"
           ? hasContact && !!formData.messagingApp
           : hasContact;
@@ -84,7 +86,7 @@ const StreamInquiryForm = ({
     if (isAdmin) return;
     setShowError(false);
     setFormData((prev) => {
-      const isTextField = field === "contact" || field === "details";
+      const isTextField = ["contact", "details", "name"].includes(field);
       const shouldToggle = !isTextField && prev[field] === val;
 
       return {
@@ -208,7 +210,7 @@ const StreamInquiryForm = ({
               <header className="mb-8">
                 <h2 className="text-2xl font-bold tracking-tighter mb-2">
                   {isAdmin
-                    ? `INQUIRY: ${formData.contact}`
+                    ? `INQUIRY: ${formData.name || formData.contact}`
                     : t("form_title_stream")}
                 </h2>
                 <p className="text-[10px] opacity-60 tracking-widest">
@@ -474,6 +476,14 @@ const StreamInquiryForm = ({
                     <h3 className="text-sm font-bold tracking-tighter mb-6">
                       {t("get_in_touch_out")}
                     </h3>
+                    <input
+                      readOnly={isAdmin}
+                      placeholder={t("form_name_label")}
+                      className={`w-full border-b bg-transparent py-4 text-lg outline-none mb-6 ${isAdmin ? "cursor-default" : ""}`}
+                      style={{ borderColor: theme.bg }}
+                      value={formData.name}
+                      onChange={(e) => update("name", e.target.value)}
+                    />
                     <input
                       readOnly={isAdmin}
                       placeholder={t("form_contact_placeholder")}
