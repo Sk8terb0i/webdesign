@@ -49,7 +49,6 @@ const GeneralInquiryForm = ({ t, theme, onSuccess, data = null }) => {
         await addDoc(collection(db, "inquiries"), {
           ...formData,
           formType: "general",
-          language: i18n.language || "en",
           createdAt: serverTimestamp(),
         });
         setSubmitted(true);
