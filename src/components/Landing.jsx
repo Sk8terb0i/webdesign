@@ -17,28 +17,28 @@ const themes = [
     bg: "#fce0e8",
     text: "#c61e3d",
     level3: "#232c2d",
-    accent: "rgba(89, 114, 205, 0.1)",
+    accent: "rgb(233, 237, 255)",
   },
   {
     name: "industrial",
     bg: "#f4f4f4",
     text: "#232c2d",
     level3: "#232c2d",
-    accent: "rgba(35, 44, 45, 0.05)",
+    accent: "rgb(30, 74, 79)",
   },
   {
     name: "midnight",
     bg: "#1a1a1a",
     text: "#e5e5e5",
     level3: "#a3a3a3",
-    accent: "rgba(255, 255, 255, 0.03)",
+    accent: "rgba(255, 255, 255, 1)",
   },
   {
     name: "moss",
     bg: "#2d3436",
     text: "#fab1a0",
     level3: "#dfe6e9",
-    accent: "rgba(250, 177, 160, 0.07)",
+    accent: "rgba(250, 177, 160, 1)",
   },
 ];
 
@@ -385,31 +385,51 @@ function Landing() {
   }, [isDragging, hoveredTheme, finalizeTheme, updateCursor]);
 
   useEffect(() => {
-    const updateFavicon = async () => {
-      const link = document.querySelector("link[rel='icon']");
-      if (!link) return;
+    const updateAssets = async () => {
+      // 1. Update Favicon
+      const faviconLink = document.querySelector("link[rel='icon']");
+      if (faviconLink) {
+        try {
+          const res = await fetch("/favicon.svg");
+          let svgText = await res.text();
+          const colorizedFavicon = svgText
+            .replace(/currentColor/g, currentTheme.text)
+            .replace(/backgroundColor/g, currentTheme.level3);
 
+          const faviconBase64 = window.btoa(
+            unescape(encodeURIComponent(colorizedFavicon)),
+          );
+          faviconLink.href = `data:image/svg+xml;base64,${faviconBase64}`;
+        } catch (err) {
+          console.error("Error updating favicon:", err);
+        }
+      }
+
+      // 2. Update On-Page Logo (Inject into a custom variable or state if needed)
+      // If you want to use the logo in Header.jsx, you can use a CSS variable
       try {
-        // Fetch the SVG from your public folder
-        const response = await fetch("/favicon.svg");
-        let svgText = await response.text();
+        const res = await fetch("/logo.svg");
+        let svgText = await res.text();
+        const colorizedLogo = svgText
+          .replace(/__BG_COLOR__/g, currentTheme.bg)
+          .replace(/__LEVEL3_COLOR__/g, currentTheme.level3)
+          .replace(/__TEXT_COLOR__/g, currentTheme.text)
+          .replace(/__ACCENT_COLOR__/g, currentTheme.accent);
 
-        // Replace 'currentColor' with the actual hex code from your theme
-        // currentTheme.text comes from your themes array
-        const colorizedSvg = svgText.replace(
-          /currentColor/g,
-          currentTheme.text,
+        const logoBase64 = window.btoa(
+          unescape(encodeURIComponent(colorizedLogo)),
         );
-
-        // Convert to a base64 data URL
-        const svgBase64 = window.btoa(colorizedSvg);
-        link.href = `data:image/svg+xml;base64,${svgBase64}`;
-      } catch (error) {
-        console.error("Error updating favicon:", error);
+        // Set a CSS variable that the Header or other components can use
+        document.documentElement.style.setProperty(
+          "--dynamic-logo",
+          `url('data:image/svg+xml;base64,${logoBase64}')`,
+        );
+      } catch (err) {
+        console.error("Error updating logo:", err);
       }
     };
 
-    updateFavicon();
+    updateAssets();
   }, [currentTheme]);
 
   const handleLevel1Toggle = useCallback(

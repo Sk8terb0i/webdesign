@@ -2,12 +2,23 @@ import React from "react";
 
 const Header = ({ t, isEn, toggleLang, textColor }) => (
   <header className="flex justify-between items-start w-full relative z-20">
-    <span
+    <div
       className="text-xl font-extralight tracking-tight flex items-center"
       style={{ color: textColor }}
     >
-      — &nbsp; {t("brand")}
-    </span>
+      {/* Dynamic Logo Replacement */}
+      <div
+        style={{
+          width: "32px",
+          height: "32px",
+          backgroundImage: "var(--dynamic-logo)",
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
+          marginRight: "12px",
+        }}
+      />
+      {t("brand")}
+    </div>
     <button
       onClick={toggleLang}
       style={{ borderColor: textColor }}
