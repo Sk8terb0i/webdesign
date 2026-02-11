@@ -67,7 +67,7 @@ const getSectionsData = (t, isEn) => [
         translationPrefix: "web_p",
       },
       { id: "web-inquiry", labelKey: "form_title_web", type: "form" },
-    ],
+    ].filter((sub) => sub.labelKey !== "examples"), //remove when you have examples ready
   },
   {
     id: "stream",
@@ -87,7 +87,7 @@ const getSectionsData = (t, isEn) => [
         translationPrefix: "stream_p",
       },
       { id: "stream-inquiry", labelKey: "form_title_stream", type: "form" },
-    ],
+    ].filter((sub) => sub.labelKey !== "examples"), //remove when you have examples ready
   },
   {
     id: "about",
