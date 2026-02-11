@@ -192,6 +192,7 @@ const WebInquiryForm = ({
         await addDoc(collection(db, "inquiries"), {
           ...formData,
           calculatedTiers,
+          language: i18n.language || "en",
           createdAt: serverTimestamp(),
         });
         setSubmitted(true);

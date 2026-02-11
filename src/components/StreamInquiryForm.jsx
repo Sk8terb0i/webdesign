@@ -116,6 +116,7 @@ const StreamInquiryForm = ({
         await addDoc(collection(db, "inquiries_stream"), {
           ...formData,
           totalEstimate,
+          language: i18n.language || "en",
           createdAt: serverTimestamp(),
         });
         setSubmitted(true);
