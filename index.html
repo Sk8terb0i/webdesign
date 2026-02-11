@@ -4,24 +4,60 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    </head>
+
+    <style>
+      /* Keep the SEO content hidden from users */
+      #seo-fallback {
+        display: none;
+      }
+      /* Prevent the default white background flash */
+      body {
+        margin: 0;
+        background-color: #fce0e8; /* Default fallback (pink) */
+      }
+    </style>
+
+    <script>
+      // Match the themes from your Landing.jsx
+      const themes = [
+        { name: "pink", bg: "#fce0e8" },
+        { name: "industrial", bg: "#f4f4f4" },
+        { name: "midnight", bg: "#1a1a1a" },
+        { name: "moss", bg: "#2d3436" }
+      ];
+
+      try {
+        const savedIndex = localStorage.getItem("selectedThemeIndex");
+        if (savedIndex !== null) {
+          const theme = themes[parseInt(savedIndex, 10)];
+          if (theme) {
+            document.body.style.backgroundColor = theme.bg;
+          }
+        }
+      } catch (e) {
+        console.error("Theme sync failed", e);
+      }
+    </script>
+  </head>
   <body>
     <div id="root">
-      <header>
-        <h1>Noe Arnold | Webdesign & Livestreaming Zürich</h1>
-        <p>Professional web design and live streaming services in Zürich by Noe Arnold. High-quality digital solutions and event broadcasting without monthly subscriptions.</p>
-      </header>
-      <main>
-        <section>
-          <h2>Webdesign & Streaming Schweiz</h2>
-          <p>Ich bin Noe Arnold, ein Webdesigner und Streaming-Techniker aus der Schweiz, spezialisiert auf performante Lösungen ohne monatliche Fixkosten.</p>
-          <ul>
-            <li>Modernes Webdesign in Zürich</li>
-            <li>Professionelle Live-Streaming Technik</li>
-            <li>Kostenloses Hosting & Eigene Domain</li>
-          </ul>
-        </section>
-      </main>
+      <div id="seo-fallback">
+        <header>
+          <h1>Noe Arnold | Webdesign & Livestreaming Zürich</h1>
+          <p>Professional web design and live streaming services in Zürich by Noe Arnold. High-quality digital solutions and event broadcasting without monthly subscriptions.</p>
+        </header>
+        <main>
+          <section>
+            <h2>Webdesign & Streaming Schweiz</h2>
+            <p>Ich bin Noe Arnold, ein Webdesigner und Streaming-Techniker aus der Schweiz, spezialisiert auf performante Lösungen ohne monatliche Fixkosten.</p>
+            <ul>
+              <li>Modernes Webdesign in Zürich</li>
+              <li>Professionelle Live-Streaming Technik</li>
+              <li>Kostenloses Hosting & Eigene Domain</li>
+            </ul>
+          </section>
+        </main>
+      </div>
     </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
