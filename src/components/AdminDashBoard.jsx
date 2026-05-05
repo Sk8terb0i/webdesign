@@ -9,6 +9,7 @@ import autoTable from "jspdf-autotable";
 // Sub-components
 import WebInquiryForm from "./WebInquiryForm";
 import StreamInquiryForm from "./StreamInquiryForm";
+import GeneralInquiryForm from "./GeneralInquiryForm";
 
 const PRICING_CONFIG = {
   base: {
@@ -214,7 +215,9 @@ const AdminDashboard = ({ theme }) => {
                 <div className="text-[9px] opacity-40 uppercase">
                   {iq.source === "stream"
                     ? `STREAM — ${iq.type}`
-                    : `${iq.type || "WEB"}`}
+                    : iq.formType === "general"
+                      ? "GENERAL INQUIRY"
+                      : `WEB — ${iq.type || "REQUEST"}`}
                 </div>
               </div>
             ))}
@@ -234,7 +237,14 @@ const AdminDashboard = ({ theme }) => {
                     <StreamInquiryForm
                       t={t}
                       theme={safeTheme}
-                      data={selectedInquiry} // Uses your 'isAdmin' logic inside the form
+                      data={selectedInquiry}
+                      hideHeading={true}
+                    />
+                  ) : selectedInquiry.formType === "general" ? (
+                    <GeneralInquiryForm
+                      t={t}
+                      theme={safeTheme}
+                      data={selectedInquiry}
                       hideHeading={true}
                     />
                   ) : (
@@ -315,21 +325,22 @@ const AdminDashboard = ({ theme }) => {
                       3. Action
                     </h3>
                     <div className="flex items-center gap-4">
-                      {selectedInquiry.source === "web" && (
-                        <div className="flex-1">
-                          <label className="text-[9px] opacity-40 block mb-1">
-                            PAGE COUNT
-                          </label>
-                          <input
-                            type="number"
-                            value={exactPageCount}
-                            onChange={(e) =>
-                              setExactPageCount(parseInt(e.target.value))
-                            }
-                            className="w-full bg-transparent border-b p-1 text-lg font-bold outline-none"
-                          />
-                        </div>
-                      )}
+                      {selectedInquiry.source === "web" &&
+                        selectedInquiry.formType !== "general" && (
+                          <div className="flex-1">
+                            <label className="text-[9px] opacity-40 block mb-1">
+                              PAGE COUNT
+                            </label>
+                            <input
+                              type="number"
+                              value={exactPageCount}
+                              onChange={(e) =>
+                                setExactPageCount(parseInt(e.target.value))
+                              }
+                              className="w-full bg-transparent border-b p-1 text-lg font-bold outline-none"
+                            />
+                          </div>
+                        )}
                       <button
                         onClick={() => generateBreakdownPDF(selectedInquiry)}
                         className="flex-1 bg-black text-white border-black border py-4 font-bold text-[10px] hover:invert transition-all"
