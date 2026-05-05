@@ -1,15 +1,29 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
+import { auth } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
+
 import Landing from "./components/Landing";
 import AdminDashboard from "./components/AdminDashBoard";
+import AdminLogin from "./components/AdminLogin"; // Ensure this import path is correct
 
 function App() {
   const { t, i18n } = useTranslation();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const currentLang = i18n.language;
 
-  // This object tells Google exactly who you are and what you do in Zürich
+  useEffect(() => {
+    // Listen for auth state once when the app starts
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const schemaData = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -29,58 +43,42 @@ function App() {
       ? "Noe Arnold | Webdesign & Streaming Zürich"
       : "Noe Arnold | Web Design & Streaming Zurich";
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#fce0e8]">
+        <p className="text-[10px] tracking-widest animate-pulse uppercase">
+          Initializing Secure Session...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <Helmet>
-        {/* 1. Standard SEO Tags */}
         <html lang={currentLang} />
         <title>{pageTitle}</title>
         <meta name="description" content={t("about_text")} />
-        <link rel="canonical" href="https://www.streaming-web.design/" />
-
-        {/* 2. Language Alternates (Hreflang) */}
-        <link
-          rel="alternate"
-          hreflang="en"
-          href="https://www.streaming-web.design/"
-        />
-        <link
-          rel="alternate"
-          hreflang="de"
-          href="https://www.streaming-web.design/"
-        />
-        <link
-          rel="alternate"
-          hreflang="x-default"
-          href="https://www.streaming-web.design/"
-        />
-
-        {/* 3. Open Graph / Facebook / LinkedIn */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.streaming-web.design/" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={t("about_text")} />
-        <meta
-          property="og:image"
-          content="https://www.streaming-web.design/faveicon.svg"
-        />
-
-        {/* 4. Twitter Meta Tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={t("about_text")} />
-        <meta
-          name="twitter:image"
-          content="https://www.streaming-web.design/faveicon.svg"
-        />
-
-        {/* 5. JSON-LD Schema */}
         <script type="application/ld+json">{JSON.stringify(schemaData)}</script>
       </Helmet>
 
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route
+          path="/admin"
+          element={
+            user ? (
+              <AdminDashboard />
+            ) : (
+              <AdminLogin
+                theme={{ bg: "#fce0e8", text: "#c61e3d" }}
+                onLogin={() => {}}
+              />
+            )
+          }
+        />
+        {/* Redirect any stray admin paths back to the main admin route */}
+        <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </>
   );

@@ -31,7 +31,9 @@
         if (savedIndex !== null) {
           const theme = themes[parseInt(savedIndex, 10)];
           if (theme) {
-            document.body.style.backgroundColor = theme.bg;
+            // We use documentElement (the <html> tag) because <body> 
+            // doesn't exist yet when this script runs in the <head>.
+            document.documentElement.style.backgroundColor = theme.bg;
           }
         }
       } catch (e) {

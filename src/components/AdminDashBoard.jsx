@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { signOut } from "firebase/auth";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 import { useTranslation } from "react-i18next";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -51,48 +51,79 @@ const AdminDashboard = ({ theme }) => {
   const { t } = useTranslation();
   const safeTheme = theme || { bg: "#000", text: "#fff" };
 
-  // 1. DUAL LISTENER: Fetch from 'inquiries' AND 'inquiries_stream'
+  // 1. DUAL LISTENER: Fetch from 'inquiries' AND 'inquiries_stream' ONLY if auth is ready
   useEffect(() => {
-    const qWeb = query(
-      collection(db, "inquiries"),
-      orderBy("createdAt", "desc"),
-    );
-    const qStream = query(
-      collection(db, "inquiries_stream"),
-      orderBy("createdAt", "desc"),
-    );
+    let unsubWeb = null;
+    let unsubStream = null;
 
-    const unsubWeb = onSnapshot(qWeb, (snapshot) => {
-      const webData = snapshot.docs.map((d) => ({
-        id: d.id,
-        source: "web",
-        ...d.data(),
-      }));
-      setInquiries((prev) => {
-        const others = prev.filter((iq) => iq.source !== "web");
-        return [...webData, ...others].sort(
-          (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
-        );
-      });
-    });
+    console.log("1. Setting up Auth Listener...");
 
-    const unsubStream = onSnapshot(qStream, (snapshot) => {
-      const streamData = snapshot.docs.map((d) => ({
-        id: d.id,
-        source: "stream",
-        ...d.data(),
-      }));
-      setInquiries((prev) => {
-        const others = prev.filter((iq) => iq.source !== "stream");
-        return [...streamData, ...others].sort(
-          (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      console.log(
+        "2. Auth State Changed. User:",
+        user ? user.email : "Not logged in",
+      );
+
+      if (user) {
+        const qWeb = query(
+          collection(db, "inquiries"),
+          orderBy("createdAt", "desc"),
         );
-      });
+        const qStream = query(
+          collection(db, "inquiries_stream"),
+          orderBy("createdAt", "desc"),
+        );
+
+        unsubWeb = onSnapshot(qWeb, (snapshot) => {
+          console.log(
+            "3a. Web Inquiries Fetched! Count:",
+            snapshot.docs.length,
+          );
+          const webData = snapshot.docs.map((d) => ({
+            id: d.id,
+            source: "web",
+            ...d.data(),
+          }));
+          setInquiries((prev) => {
+            const others = prev.filter((iq) => iq.source !== "web");
+            return [...webData, ...others].sort(
+              (a, b) =>
+                (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+            );
+          });
+        });
+
+        unsubStream = onSnapshot(qStream, (snapshot) => {
+          console.log(
+            "3b. Stream Inquiries Fetched! Count:",
+            snapshot.docs.length,
+          );
+          const streamData = snapshot.docs.map((d) => ({
+            id: d.id,
+            source: "stream",
+            ...d.data(),
+          }));
+          setInquiries((prev) => {
+            const others = prev.filter((iq) => iq.source !== "stream");
+            return [...streamData, ...others].sort(
+              (a, b) =>
+                (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+            );
+          });
+        });
+      } else {
+        // Parent App.jsx now handles redirection.
+        // We just clean up local state and listeners here.
+        setInquiries([]);
+        if (unsubWeb) unsubWeb();
+        if (unsubStream) unsubStream();
+      }
     });
 
     return () => {
-      unsubWeb();
-      unsubStream();
+      unsubAuth();
+      if (unsubWeb) unsubWeb();
+      if (unsubStream) unsubStream();
     };
   }, []);
 

@@ -9,11 +9,19 @@ const AdminLogin = ({ theme, onLogin }) => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
     try {
+      // Use setPersistence if you want to ensure it stays logged in across refreshes
       await signInWithEmailAndPassword(auth, email, password);
-      onLogin(); // Callback to tell the parent app we are in
+
+      // We don't call onLogin() immediately. We wait a tiny bit for
+      // the Firebase Auth token to propagate to the browser.
+      setTimeout(() => {
+        onLogin();
+      }, 500);
     } catch (err) {
-      setError("Invalid credentials");
+      console.error("Login Error:", err.code);
+      setError("Invalid credentials or connection issue.");
     }
   };
 

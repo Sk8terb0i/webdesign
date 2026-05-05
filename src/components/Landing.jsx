@@ -117,6 +117,13 @@ const getSectionsData = (t, isEn) => [
         labelKey: "get_in_touch",
         type: "form",
       },
+      {
+        id: "contact-email",
+        labelKey: "email",
+        type: "link",
+        href: "mailto:noe.arnold@outlook.com",
+        fileName: "noe.arnold@outlook.com",
+      },
     ],
   },
 ];

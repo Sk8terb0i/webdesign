@@ -128,6 +128,17 @@ const GeneralInquiryForm = ({ t, theme, onSuccess, data = null }) => {
                   ? `INQUIRY: ${formData.name || formData.contact}`
                   : t("contact_me")}
               </h2>
+              {!isAdmin && (
+                <p className="text-[10px] opacity-60 tracking-widest mt-2">
+                  Or email directly:{" "}
+                  <a
+                    href="mailto:noe.arnold@outlook.com"
+                    className="font-bold underline hover:opacity-80"
+                  >
+                    noe.arnold@outlook.com
+                  </a>
+                </p>
+              )}
               <div className="flex gap-1 mt-4">
                 {[1, 2].map((s) => (
                   <div
